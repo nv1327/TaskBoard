@@ -10,8 +10,11 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCorners,
+  pointerWithin,
+  closestCenter,
+  getFirstCollision,
 } from "@dnd-kit/core";
+import type { CollisionDetection } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { BoardColumn } from "./BoardColumn";
 import { FeatureCard } from "./FeatureCard";
@@ -56,6 +59,13 @@ export function BoardView({ initialFeatures, projectId }: BoardViewProps) {
             a.position - b.position
         ),
     [features]
+  );
+
+  // Custom collision detection: pointer-within wins (works for empty columns),
+  // fall back to closest-center for when dragging over cards.
+  const collisionDetection: CollisionDetection = useCallback(
+    (args) => getFirstCollision([pointerWithin(args), closestCenter(args)]),
+    []
   );
 
   const activeFeature = features.find((f) => f.id === activeId);
@@ -157,7 +167,7 @@ export function BoardView({ initialFeatures, projectId }: BoardViewProps) {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
