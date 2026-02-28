@@ -113,6 +113,11 @@ curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
   -d '{"subtasks": [{"id": "<subtaskId>", "status": "done"}]}'
 ```
 5. **Before opening a PR — all tests must pass.** Run the full test suite. If any test fails, fix the bug on this branch before proceeding. Do not move to `in_review` with a failing test suite.
+5a. **E2E / smoke test** the happy path. For API features, exercise each new endpoint end-to-end (create → read → update → delete). For UI features, verify the core user flow works from the browser. Catch integration issues that unit tests miss.
+5b. **Self-learning check** — before moving on, reflect on what you built:
+   - Did anything surprise you? (unexpected API behaviour, schema constraints, missing abstractions, workflow gaps)
+   - Is anything in `AGENTS.md`, `global-claude.md`, or `global-claude.template.md` now outdated or incomplete given what you learned?
+   - Propose specific additions or edits to the human. Do not edit the docs unilaterally — wait for approval, then make the changes.
 6. **Open a pull request** against `main`. Record the PR URL and move to `in_review`. Verify the response:
 ```bash
 curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
@@ -129,6 +134,7 @@ curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
   -H "Content-Type: application/json" \
   -d '{"status": "done"}'
 ```
+8a. **Document human review findings** in the feature spec. Append a `## Review findings` section via `PATCH`, recording what the human changed or corrected, why it mattered, and what future agents should do differently. This is institutional memory — future context fetches will include it.
 
 ---
 

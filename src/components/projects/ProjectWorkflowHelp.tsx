@@ -113,6 +113,11 @@ export function ProjectWorkflowHelp({ projectId }: ProjectWorkflowHelpProps) {
                   </li>
                   <li>Implement. Mark subtasks done as each is completed.</li>
                   <li>
+                    Run all tests. Then E2E smoke-test the happy path. Then do a{" "}
+                    <strong>self-learning check</strong>: did anything surprise you? Should any workflow docs be
+                    updated? Propose changes — don&apos;t edit docs unilaterally.
+                  </li>
+                  <li>
                     Open a PR against <code className="rounded bg-zinc-100 px-1 py-0.5">main</code>, move feature to{" "}
                     <code className="rounded bg-zinc-100 px-1 py-0.5">in_review</code>, record PR URL.
                   </li>
@@ -121,7 +126,11 @@ export function ProjectWorkflowHelp({ projectId }: ProjectWorkflowHelpProps) {
                   </li>
                   <li>
                     After you merge, agent marks feature{" "}
-                    <code className="rounded bg-zinc-100 px-1 py-0.5">done</code> and picks the next one.
+                    <code className="rounded bg-zinc-100 px-1 py-0.5">done</code>.
+                  </li>
+                  <li>
+                    Agent appends a <code className="rounded bg-zinc-100 px-1 py-0.5">## Review findings</code> section
+                    to the feature spec — recording what you changed and why. Institutional memory for future sessions.
                   </li>
                 </ul>
               </li>

@@ -169,6 +169,9 @@ The human reviews each PR before merging to `main`. Required for production code
 4. Move feature to `in_progress` and record the branch URL via `PATCH`. Verify the response confirms the update.
 5. **Implement** the feature. Mark each subtask `done` as you go.
 6. **Run the full test suite. All tests must pass before opening a PR.** If tests catch a bug, fix it on the branch.
+6a. **E2E / smoke test** the happy path. For API features, exercise each new endpoint (create → read → update → delete). For UI features, verify the core user flow in the browser.
+6b. **Self-learning check** — reflect on what you built. Did anything surprise you? Is anything in the workflow docs now outdated? Propose specific edits to the human and wait for approval before changing any `.md` file.
 7. **Open a PR** against `main`. Move feature to `in_review` and record the PR URL via `PATCH`. Verify the response. For local repos not yet on GitHub, use `<repo>/compare/main...<branch>` as the `prUrl` placeholder.
 8. **Stop and wait for human review.** Summarise what you built, what the tests cover, and what you want reviewed. Do not merge or start the next feature.
 9. After human approves and merges, move feature to `done`.
+9a. **Document human review findings** in the feature spec — append a `## Review findings` section recording what the human corrected, why it mattered, and what future agents should do differently. This becomes part of the permanent project record and is surfaced in future context fetches.
