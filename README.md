@@ -127,6 +127,25 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) — it will redirect to the project list.
 
+### Branch-isolated local Postgres workflow (recommended)
+
+To prevent feature-branch Prisma migrations from affecting your main dev database,
+PM Board includes two scripts:
+
+```bash
+# On a feature branch: create/switch to branch DB + apply migrations
+npm run db:branch
+
+# After human-approved merge to main: restore main DB + apply merged migrations + drop branch DB
+git checkout main
+npm run db:cleanup -- --branch feat/<slug> --yes
+```
+
+Notes:
+- Uses local PostgreSQL (no Docker required)
+- Stores canonical main connection in `.env` as `DATABASE_URL_MAIN`
+- Cleanup script only runs on `main`/`master` as a safety check
+
 ---
 
 ## Project Structure

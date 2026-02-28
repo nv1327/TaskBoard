@@ -99,6 +99,10 @@ curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
 2. **Create a branch** named `feat/<short-slug>` from `main`. At this point, before writing any code:
    - Create a `.gitignore` appropriate for the language (`.venv/`, `__pycache__/`, `node_modules/`, build artifacts, etc.)
    - Set up the test environment now (e.g. `python3 -m venv .venv && .venv/bin/pip install pytest`). Do not wait until after implementation — a broken test environment at PR time is a blocker.
+   - If this project uses branch-isolated databases, switch to branch DB and auto-apply migrations:
+```bash
+npm run db:branch
+```
 3. **Move the feature to `in_progress`** and record the branch URL. Verify the response:
 ```bash
 curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
@@ -135,6 +139,11 @@ curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
   -d '{"status": "done"}'
 ```
 8a. **Document human review findings** in the feature spec. Append a `## Review findings` section via `PATCH`, recording what the human changed or corrected, why it mattered, and what future agents should do differently. This is institutional memory — future context fetches will include it.
+8b. If this project uses branch-isolated databases, **only after human-approved merge**, run:
+```bash
+git checkout main
+npm run db:cleanup -- --branch feat/<slug> --yes
+```
 
 ---
 

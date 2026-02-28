@@ -34,6 +34,8 @@ const COLUMNS: { status: FeatureStatus; label: string; color: string }[] = [
   { status: "CANCELLED", label: "Cancelled", color: "bg-red-300" },
 ];
 
+const PRIORITY_ORDER: Record<string, number> = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+
 interface BoardViewProps {
   initialFeatures: FullFeature[];
   projectId: string;
@@ -46,8 +48,6 @@ export function BoardView({ initialFeatures, projectId }: BoardViewProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
-
-  const PRIORITY_ORDER: Record<string, number> = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
 
   const featuresByStatus = useCallback(
     (status: FeatureStatus) =>

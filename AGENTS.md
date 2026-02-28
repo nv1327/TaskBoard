@@ -166,6 +166,11 @@ The human reviews each PR before merging to `main`. Required for production code
 1. **Start of session** — fetch project context to load current work, branch/PR state, and mission.
 2. **Pick** the next `todo` feature. If it has no spec yet (approved from roadmap but not yet specced), write the full spec via `PATCH` before starting implementation.
 3. **Create a branch** `feat/<short-slug>` from `main`. Before writing any code: create `.gitignore` and set up the test environment (venv, install deps). Do this early — a broken test environment at PR time blocks the whole flow.
+3a. **Use isolated branch DBs for PM Board development.** After creating/switching to a feature branch, run:
+```bash
+npm run db:branch
+```
+This creates/switches to a branch-specific local Postgres database and auto-applies migrations so branch schema changes do not affect main's dev database.
 4. Move feature to `in_progress` and record the branch URL via `PATCH`. Verify the response confirms the update.
 5. **Implement** the feature. Mark each subtask `done` as you go.
 6. **Run the full test suite. All tests must pass before opening a PR.** If tests catch a bug, fix it on the branch.
@@ -175,3 +180,9 @@ The human reviews each PR before merging to `main`. Required for production code
 8. **Stop and wait for human review.** Summarise what you built, what the tests cover, and what you want reviewed. Do not merge or start the next feature.
 9. After human approves and merges, move feature to `done`.
 9a. **Document human review findings** in the feature spec — append a `## Review findings` section recording what the human corrected, why it mattered, and what future agents should do differently. This becomes part of the permanent project record and is surfaced in future context fetches.
+9b. **After Gate 2 merge approval only**, switch back to `main` and clean up the branch DB:
+```bash
+git checkout main
+npm run db:cleanup -- --branch feat/<slug> --yes
+```
+This restores `DATABASE_URL` to main, applies merged migrations to main DB, then drops the merged feature branch DB.
