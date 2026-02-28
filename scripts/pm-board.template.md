@@ -1,12 +1,11 @@
 ---
 pm_board_project_id: REPLACE_WITH_PROJECT_ID
-pm_board_project_name: REPLACE_WITH_PROJECT_NAME
 pm_board_url: http://localhost:3000
 ---
 
 # PM Board Link
 
-This repository is tracked in **[PM Board](http://localhost:3000)** under the project **REPLACE_WITH_PROJECT_NAME**.
+This repository is tracked in **[PM Board](http://localhost:3000)**.
 
 ## Loading context
 

@@ -29,13 +29,14 @@ enum SubtaskStatus {
 }
 
 model Project {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
   description String?
   repoUrl     String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   features    Feature[]
+  changelog   ChangeLog[]
 
   @@map("projects")
 }
@@ -71,6 +72,23 @@ model Subtask {
   feature   Feature       @relation(fields: [featureId], references: [id], onDelete: Cascade)
 
   @@map("subtasks")
+}
+
+model ChangeLog {
+  id          String   @id @default(cuid())
+  action      String   // e.g. FEATURE_CREATED, STATUS_CHANGED, SUBTASK_DONE
+  summary     String   // human-readable one-liner
+  featureId   String?
+  featureTitle String?  // denormalised so logs survive feature deletion
+  subtaskId   String?
+  subtaskTitle String?
+  meta        Json?    // e.g. { from: "TODO", to: "DONE" }
+  createdAt   DateTime @default(now())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt(sort: Desc)])
+  @@map("change_logs")
 }
 
 model Attachment {

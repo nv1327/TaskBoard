@@ -79,13 +79,12 @@ mkdir -p "$TARGET_DIR"
 cat > "$TARGET_DIR/.pm-board.md" <<EOF
 ---
 pm_board_project_id: $PROJECT_ID
-pm_board_project_name: $PROJECT_NAME
 pm_board_url: $PM_BOARD_URL
 ---
 
 # PM Board Link
 
-This repository is tracked in **[PM Board]($PM_BOARD_URL)** under the project **$PROJECT_NAME**.
+This repository is tracked in **[PM Board]($PM_BOARD_URL)**.
 
 ## Loading context
 

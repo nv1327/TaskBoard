@@ -7,7 +7,7 @@ import { PriorityBadge } from "@/components/layout/PriorityBadge";
 import { Progress } from "@/components/ui/progress";
 import { GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Feature, Priority, FeatureStatus } from "@prisma/client";
+import type { Feature } from "@prisma/client";
 
 interface FeatureCardProps {
   feature: Feature & {

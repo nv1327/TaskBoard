@@ -97,51 +97,54 @@ export function BoardView({ initialFeatures, projectId }: BoardViewProps) {
     const activeFeatureId = active.id as string;
     const overId = over.id as string;
 
-    setFeatures((prev) => {
-      const activeFeature = prev.find((f) => f.id === activeFeatureId)!;
-      const overFeature = prev.find((f) => f.id === overId);
-      const overColumn = COLUMNS.find((c) => c.status === overId);
+    const activeFeature = features.find((f) => f.id === activeFeatureId);
+    if (!activeFeature) return;
 
-      const targetStatus = overFeature?.status ?? overColumn?.status ?? activeFeature.status;
+    const overFeature = features.find((f) => f.id === overId);
+    const overColumn = COLUMNS.find((c) => c.status === overId);
 
-      // Build ordered list for the target column
-      const columnFeatures = prev
-        .filter((f) => f.status === targetStatus)
-        .sort((a, b) => a.position - b.position);
+    const targetStatus = overFeature?.status ?? overColumn?.status ?? activeFeature.status;
 
-      const oldIndex = columnFeatures.findIndex((f) => f.id === activeFeatureId);
-      const newIndex = overFeature
-        ? columnFeatures.findIndex((f) => f.id === overId)
-        : columnFeatures.length - 1;
+    // Build ordered list for the target column
+    const columnFeatures = features
+      .filter((f) => f.status === targetStatus)
+      .sort((a, b) => a.position - b.position);
 
-      let reordered: FullFeature[];
-      if (oldIndex !== -1) {
-        reordered = arrayMove(columnFeatures, oldIndex, newIndex);
-      } else {
-        // Moving from another column — insert at target position
-        const withoutActive = columnFeatures.filter((f) => f.id !== activeFeatureId);
-        const insertAt = overFeature ? columnFeatures.findIndex((f) => f.id === overId) : withoutActive.length;
-        reordered = [
-          ...withoutActive.slice(0, insertAt),
-          { ...activeFeature, status: targetStatus },
-          ...withoutActive.slice(insertAt),
-        ];
-      }
+    const oldIndex = columnFeatures.findIndex((f) => f.id === activeFeatureId);
+    const newIndex = overFeature
+      ? columnFeatures.findIndex((f) => f.id === overId)
+      : columnFeatures.length - 1;
 
-      const updatedPositions = reordered.map((f, i) => ({ ...f, position: i }));
-      const targetFeature = updatedPositions.find((f) => f.id === activeFeatureId)!;
+    let reordered: FullFeature[];
+    if (oldIndex !== -1) {
+      reordered = arrayMove(columnFeatures, oldIndex, newIndex);
+    } else {
+      // Moving from another column — insert at target position
+      const withoutActive = columnFeatures.filter((f) => f.id !== activeFeatureId);
+      const insertAt = overFeature ? columnFeatures.findIndex((f) => f.id === overId) : withoutActive.length;
+      reordered = [
+        ...withoutActive.slice(0, insertAt),
+        { ...activeFeature, status: targetStatus },
+        ...withoutActive.slice(insertAt),
+      ];
+    }
 
-      // Persist to API
-      fetch(`/api/projects/${projectId}/features/${activeFeatureId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: targetStatus, position: targetFeature.position }),
-      });
+    const updatedPositions = reordered.map((f, i) => ({ ...f, position: i }));
+    const targetFeature = updatedPositions.find((f) => f.id === activeFeatureId);
+    if (!targetFeature) return;
 
-      return prev.map((f) => {
+    setFeatures((prev) =>
+      prev.map((f) => {
         const updated = updatedPositions.find((u) => u.id === f.id);
         return updated ?? f;
-      });
+      })
+    );
+
+    // Persist to API
+    await fetch(`/api/projects/${projectId}/features/${activeFeatureId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: targetStatus, position: targetFeature.position }),
     });
   }
 

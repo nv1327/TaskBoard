@@ -100,3 +100,9 @@ export const agentFeaturesQuerySchema = z.object({
   q: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
 });
+
+export const agentUpdateProjectSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().optional().nullable(),
+  repoUrl: z.string().url().optional().nullable().or(z.literal("")),
+});

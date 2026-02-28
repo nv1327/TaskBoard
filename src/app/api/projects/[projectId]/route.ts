@@ -31,6 +31,7 @@ export async function PATCH(
         ...(data.repoUrl !== undefined && { repoUrl: data.repoUrl || null }),
       },
     });
+
     return NextResponse.json(project);
   } catch {
     return NextResponse.json({ error: "Failed to update project" }, { status: 500 });

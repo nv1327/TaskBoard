@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { agentCreateFeatureSchema, agentFeaturesQuerySchema } from "@/lib/validations";
+import { log } from "@/lib/changelog";
 
 export async function GET(request: Request) {
   try {
@@ -83,6 +84,16 @@ export async function POST(request: Request) {
         })),
       });
     }
+
+    await log({
+      action: "FEATURE_CREATED",
+      summary: `Feature created: "${feature.title}"`,
+      projectId: data.projectId,
+      featureId: feature.id,
+      featureTitle: feature.title,
+      source: "agent",
+      meta: { status: feature.status, priority: feature.priority },
+    });
 
     const fullFeature = await prisma.feature.findUnique({
       where: { id: feature.id },

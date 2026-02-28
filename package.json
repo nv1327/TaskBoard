@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "context": "bash scripts/load-context.sh",
+    "refresh": "bash scripts/load-context.sh --diff",
     "init-project": "bash scripts/init-project.sh"
   },
   "dependencies": {

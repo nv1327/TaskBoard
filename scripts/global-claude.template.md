@@ -55,26 +55,53 @@ what is in progress before making any changes.
 
 ## Updating PM Board during a session
 
-- When you complete a subtask, mark it done via the API
-- When a feature is finished or ready for review, update its status
-- If new work is discovered during a session, create a feature for it
+After **any** of the following events, update PM Board and then refresh context:
+
+| Event | Action |
+|---|---|
+| Subtask completed | PATCH feature with subtask status `done` |
+| Feature finished | PATCH feature status to `done` or `in_review` |
+| New work identified | POST a new feature to backlog |
+| Blocked or scope changed | PATCH feature status + update spec |
 
 ```bash
-# Mark feature in review
-curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
-  -H "Content-Type: application/json" \
-  -d '{"status": "in_review"}'
-
 # Mark a subtask done
 curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
   -H "Content-Type: application/json" \
   -d '{"subtasks": [{"id": "<subtaskId>", "status": "done"}]}'
 
-# Create a new feature
+# Move feature to in_review
+curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
+  -H "Content-Type: application/json" \
+  -d '{"status": "in_review"}'
+
+# Create a new feature for newly discovered work
 curl -X POST <PM_BOARD_URL>/api/agent/features \
   -H "Content-Type: application/json" \
   -d '{"projectId": "<id>", "title": "...", "priority": "medium", "status": "backlog"}'
 ```
+
+## Refreshing context
+
+The context endpoint always returns live data. Re-fetch it after any update to confirm
+the change is reflected before continuing work.
+
+```bash
+# Refresh and save to file
+curl -s <PM_BOARD_URL>/api/agent/projects/<projectId>/context > .pm-board-context.md
+
+# Or using the script (reads project ID from .pm-board.md automatically)
+<PM_BOARD_DIR>/scripts/load-context.sh
+
+# Show a diff of what changed since the last fetch
+<PM_BOARD_DIR>/scripts/load-context.sh --diff
+```
+
+**Refresh triggers — always refresh context when:**
+- You finish a subtask or feature
+- You add new features mid-session
+- You are resuming after a break
+- You are about to start a new major piece of work and want to confirm current state
 
 ## PM Board location
 

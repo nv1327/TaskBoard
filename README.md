@@ -205,11 +205,13 @@ DELETE /api/projects/:id/features/:fid/attachments?id=:aid
 ### Agent API
 
 ```
-GET  /api/agent/projects
-GET  /api/agent/projects/:id/context              # full project snapshot as markdown
-GET  /api/agent/features?projectId=&status=&priority=&q=&limit=
-POST /api/agent/features
-GET  /api/agent/features/:id
+GET   /api/agent/projects
+GET   /api/agent/projects/:id
+PATCH /api/agent/projects/:id
+GET   /api/agent/projects/:id/context              # full project snapshot as markdown
+GET   /api/agent/features?projectId=&status=&priority=&q=&limit=
+POST  /api/agent/features
+GET   /api/agent/features/:id
 PATCH /api/agent/features/:id
 ```
 
@@ -261,7 +263,7 @@ curl -s http://localhost:3000/api/agent/projects | jq -r '.data[] | "\(.id)  \(.
 
 # Copy the template into your repo
 cp /path/to/pm-board/scripts/pm-board.template.md /path/to/your-repo/.pm-board.md
-# Then edit it and replace REPLACE_WITH_PROJECT_ID and REPLACE_WITH_PROJECT_NAME
+# Then edit it and replace REPLACE_WITH_PROJECT_ID
 ```
 
 The `.pm-board.md` file looks like this:
@@ -269,10 +271,11 @@ The `.pm-board.md` file looks like this:
 ```markdown
 ---
 pm_board_project_id: cmm5uqb6u0000y0n9j07pqt7n
-pm_board_project_name: My Project
 pm_board_url: http://localhost:3000
 ---
 ```
+
+`pm_board_project_id` is the canonical link key (project names can change).
 
 ### Loading context at the start of a session
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createFeatureSchema } from "@/lib/validations";
+import { log } from "@/lib/changelog";
 import { FeatureStatus } from "@prisma/client";
 
 export async function GET(
@@ -52,6 +53,14 @@ export async function POST(
         branchUrl: data.branchUrl || null,
         projectId,
       },
+    });
+    await log({
+      action: "FEATURE_CREATED",
+      summary: `Feature created: "${feature.title}"`,
+      projectId,
+      featureId: feature.id,
+      featureTitle: feature.title,
+      meta: { status: feature.status, priority: feature.priority },
     });
     return NextResponse.json(feature, { status: 201 });
   } catch (error: unknown) {

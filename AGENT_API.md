@@ -39,6 +39,37 @@ curl http://localhost:3000/api/agent/projects
 
 ---
 
+### GET /api/agent/projects/:id
+
+Get one project.
+
+**Example:**
+```bash
+curl http://localhost:3000/api/agent/projects/PROJECT_ID
+```
+
+### PATCH /api/agent/projects/:id
+
+Update project metadata.
+
+**Request body (all optional):**
+```json
+{
+  "name": "New project name",
+  "description": "Updated description",
+  "repoUrl": "https://github.com/org/new-repo"
+}
+```
+
+**Example:**
+```bash
+curl -X PATCH http://localhost:3000/api/agent/projects/PROJECT_ID \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Renamed Project","repoUrl":"https://github.com/org/repo"}'
+```
+
+---
+
 ### GET /api/agent/features
 
 List features with optional filters.

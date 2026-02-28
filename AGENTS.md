@@ -36,6 +36,17 @@ curl -s "http://localhost:3000/api/agent/features?projectId=<id>&status=backlog"
 curl http://localhost:3000/api/agent/projects
 ```
 
+### Get / update a project
+```bash
+# Get one project
+curl http://localhost:3000/api/agent/projects/<projectId>
+
+# Rename project / update repo URL
+curl -X PATCH http://localhost:3000/api/agent/projects/<projectId> \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Renamed Project","repoUrl":"https://github.com/org/repo"}'
+```
+
 ### Search features
 ```bash
 # All in-progress features

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createSubtaskSchema } from "@/lib/validations";
+import { log } from "@/lib/changelog";
 
 export async function GET(
   _request: Request,
@@ -16,9 +17,9 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ featureId: string }> }
+  { params }: { params: Promise<{ projectId: string; featureId: string }> }
 ) {
-  const { featureId } = await params;
+  const { projectId, featureId } = await params;
   try {
     const body = await request.json();
     const data = createSubtaskSchema.parse(body);
@@ -35,6 +36,18 @@ export async function POST(
         position: (max._max.position ?? -1) + 1,
       },
     });
+
+    const feature = await prisma.feature.findUnique({ where: { id: featureId } });
+    await log({
+      action: "SUBTASK_CREATED",
+      summary: `Subtask added to "${feature?.title ?? featureId}": "${subtask.title}"`,
+      projectId,
+      featureId,
+      featureTitle: feature?.title,
+      subtaskId: subtask.id,
+      subtaskTitle: subtask.title,
+    });
+
     return NextResponse.json(subtask, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Failed to create subtask" }, { status: 500 });
