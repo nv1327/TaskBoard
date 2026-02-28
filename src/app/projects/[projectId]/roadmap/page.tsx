@@ -23,7 +23,7 @@ export default async function RoadmapPage({
     }),
     prisma.feature.findMany({
       where: { projectId },
-      orderBy: [{ status: "asc" }, { position: "asc" }],
+      orderBy: [{ position: "asc" }],
       include: { subtasks: { select: { id: true, status: true } } },
     }),
   ]);

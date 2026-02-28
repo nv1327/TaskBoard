@@ -14,7 +14,7 @@ export default async function ProjectBoardPage({
 
   const features = await prisma.feature.findMany({
     where: { projectId },
-    orderBy: [{ status: "asc" }, { position: "asc" }],
+    orderBy: [{ position: "asc" }],
     include: {
       _count: { select: { subtasks: true } },
       subtasks: { where: { status: "DONE" }, select: { id: true } },

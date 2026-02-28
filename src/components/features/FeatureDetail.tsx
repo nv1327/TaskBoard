@@ -46,6 +46,8 @@ export function FeatureDetail({
   const [feature, setFeature] = useState(initial);
   const [editingSpec, setEditingSpec] = useState(false);
   const [spec, setSpec] = useState(initial.spec ?? "");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(initial.title);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -85,7 +87,32 @@ export function FeatureDetail({
     <div className="flex h-full flex-col overflow-y-auto">
       <div className="border-b border-zinc-200 bg-white px-8 py-5">
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-xl font-semibold text-zinc-900">{feature.title}</h1>
+          {editingTitle ? (
+            <input
+              autoFocus
+              className="w-full rounded border border-zinc-300 px-2 py-0.5 text-xl font-semibold text-zinc-900 focus:border-zinc-400 focus:outline-none"
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onBlur={async () => {
+                setEditingTitle(false);
+                const trimmed = titleDraft.trim();
+                if (trimmed && trimmed !== feature.title) await patch({ title: trimmed });
+                else setTitleDraft(feature.title);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                if (e.key === "Escape") { setTitleDraft(feature.title); setEditingTitle(false); }
+              }}
+            />
+          ) : (
+            <h1
+              className="cursor-text text-xl font-semibold text-zinc-900 hover:text-zinc-600"
+              title="Click to edit title"
+              onClick={() => { setTitleDraft(feature.title); setEditingTitle(true); }}
+            >
+              {feature.title}
+            </h1>
+          )}
           <div className="flex items-center gap-2">
             {saving && <span className="text-xs text-zinc-400">Saving...</span>}
             <Button
