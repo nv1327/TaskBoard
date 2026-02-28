@@ -65,6 +65,7 @@ Built for developers who want Linear-style project management without the SaaS o
 - Consistent `{ ok, data }` response envelope
 - Full-text search across title, description, and spec
 - Create features with auto-created subtasks in a single request
+- **Project context endpoint** — returns a full formatted markdown snapshot of any project
 - See [`AGENTS.md`](./AGENTS.md) for the full reference
 
 ---
@@ -205,6 +206,7 @@ DELETE /api/projects/:id/features/:fid/attachments?id=:aid
 
 ```
 GET  /api/agent/projects
+GET  /api/agent/projects/:id/context              # full project snapshot as markdown
 GET  /api/agent/features?projectId=&status=&priority=&q=&limit=
 POST /api/agent/features
 GET  /api/agent/features/:id
@@ -217,22 +219,141 @@ All agent endpoints return `{ ok: boolean, data: ... }`. Enum values accept lowe
 
 ## Agent Integration
 
-The fastest way to give Claude Code context from your board:
+### Automatically creating a PM Board project when spinning up a new repo
+
+The fastest way to wire up every new project from day one — run this once when you create the directory:
 
 ```bash
-# Load all in-progress features into a session
-claude "$(curl -s 'http://localhost:3000/api/agent/features?status=in_progress' \
-  | jq -r '.data[] | "## \(.title)\n\(.spec // "")\n"')"
+/path/to/pm-board/scripts/init-project.sh \
+  --name "My New Project" \
+  --description "What it does" \
+  --repo "https://github.com/you/my-new-project" \
+  --dir ~/Projects/my-new-project
 ```
 
-Or add to `CLAUDE.md` for automatic context loading:
+This will:
+1. Hit `POST /api/projects` to register the project in PM Board
+2. Write a `.pm-board.md` link file into the project directory with the project ID baked in
+3. Print the PM Board URL so you can open it straight away
+
+**To make this fully automatic with Claude Code**, use the provided template to generate a personalised config and append it to your global `~/.claude/CLAUDE.md`. After that, any time you ask Claude Code to scaffold a new project it will register it in PM Board and drop the `.pm-board.md` file without being asked.
+
+```bash
+# 1. Copy the template and fill in your local paths
+cp scripts/global-claude.template.md scripts/global-claude.md
+# Edit scripts/global-claude.md — replace <PM_BOARD_DIR> and <PM_BOARD_URL>
+
+# 2. Append to your global Claude config
+cat scripts/global-claude.md >> ~/.claude/CLAUDE.md
+```
+
+> `scripts/global-claude.md` is gitignored — your local paths stay private.
+
+---
+
+### Linking a project repo to PM Board
+
+Each of your software repos can declare which PM Board project it belongs to by adding a `.pm-board.md` file to its root. Copy the template and fill in your project ID (visible in the PM Board URL or via the API):
+
+```bash
+# Get your project ID
+curl -s http://localhost:3000/api/agent/projects | jq -r '.data[] | "\(.id)  \(.name)"'
+
+# Copy the template into your repo
+cp /path/to/pm-board/scripts/pm-board.template.md /path/to/your-repo/.pm-board.md
+# Then edit it and replace REPLACE_WITH_PROJECT_ID and REPLACE_WITH_PROJECT_NAME
+```
+
+The `.pm-board.md` file looks like this:
 
 ```markdown
-At the start of each session, fetch active work:
-curl -s "http://localhost:3000/api/agent/features?status=in_progress"
+---
+pm_board_project_id: cmm5uqb6u0000y0n9j07pqt7n
+pm_board_project_name: My Project
+pm_board_url: http://localhost:3000
+---
 ```
 
-See [`AGENTS.md`](./AGENTS.md) for the complete guide including create, update, and export workflows.
+### Loading context at the start of a session
+
+**Option 1 — Direct curl (paste into any agent conversation):**
+
+```bash
+curl -s http://localhost:3000/api/agent/projects/<projectId>/context
+```
+
+Returns a fully-formatted markdown document with all features, specs, subtasks, and a status summary — ready to paste or pipe anywhere.
+
+**Option 2 — Save to a file and attach:**
+
+```bash
+# From within your project repo (reads .pm-board.md automatically)
+/path/to/pm-board/scripts/load-context.sh
+
+# Saves .pm-board-context.md in the current directory
+# Then attach that file to your Claude or agent conversation
+```
+
+**Option 3 — Pipe directly into Claude Code:**
+
+```bash
+/path/to/pm-board/scripts/load-context.sh --print | claude
+```
+
+**Option 4 — Add to `CLAUDE.md` for automatic loading:**
+
+```markdown
+## Project context
+
+This project is tracked in PM Board. At the start of each session, load current tasks:
+
+curl -s http://localhost:3000/api/agent/projects/<projectId>/context
+```
+
+### What the context document contains
+
+```
+# Project Context: My Project
+
+## Summary
+| Status       | Count |
+|---|---|
+| In Progress  | 2     |
+| Todo/Backlog | 5     |
+| Done         | 3     |
+
+## Features
+
+### In Progress (2)
+
+#### Add OAuth login
+- Priority: HIGH
+- ID: `cmm5v5a250001z5p1yt0v9q6g`
+  - [ ] Create OAuth app
+  - [x] Implement callback handler
+
+  **Spec:**
+  ## OAuth Login
+  Implement GitHub OAuth using NextAuth...
+```
+
+The document includes a self-referencing fetch URL at the top so agents always know where to get a fresh copy mid-session.
+
+### Updating features from an agent
+
+```bash
+# Move a feature to in_review
+curl -X PATCH http://localhost:3000/api/agent/features/<featureId> \
+  -H "Content-Type: application/json" \
+  -d '{"status": "in_review"}'
+
+# Mark a subtask done
+curl -X PATCH http://localhost:3000/api/agent/features/<featureId> \
+  -H "Content-Type: application/json" \
+  -d '{"subtasks": [{"id": "<subtaskId>", "status": "done"}]}'
+```
+
+See [`AGENTS.md`](./AGENTS.md) for the complete reference.
 
 ---
 
@@ -253,13 +374,24 @@ DATABASE_URL="postgresql://<user>@localhost:5432/pm_board?schema=public"
 ## Scripts
 
 ```bash
-npm run dev        # Start development server (Turbopack)
-npm run build      # Production build
-npm run start      # Start production server
-npm run lint       # ESLint
+npm run dev          # Start development server (Turbopack)
+npm run build        # Production build
+npm run start        # Start production server
+npm run lint         # ESLint
+npm run context      # Load project context from .pm-board.md → .pm-board-context.md
+npm run init-project # Register a new project in PM Board (pass args via --)
 
-npx prisma studio  # Open Prisma Studio (visual DB browser)
-npx prisma migrate dev --name <name>  # Create and apply a new migration
+# Examples
+npm run init-project -- --name "My Project" --dir ~/Projects/my-project
+npm run context                         # load context from .pm-board.md in current dir
+
+# One-time global Claude Code setup
+cp scripts/global-claude.template.md scripts/global-claude.md
+# (edit scripts/global-claude.md with your local paths, then:)
+cat scripts/global-claude.md >> ~/.claude/CLAUDE.md
+
+npx prisma studio                       # Open Prisma Studio (visual DB browser)
+npx prisma migrate dev --name <name>    # Create and apply a new migration
 ```
 
 ---

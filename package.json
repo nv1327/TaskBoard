@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "context": "bash scripts/load-context.sh",
+    "init-project": "bash scripts/init-project.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

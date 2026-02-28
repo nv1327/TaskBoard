@@ -42,6 +42,9 @@ next-env.d.ts
 
 /src/generated/prisma
 
+# personal agent config (contains local paths — use global-claude.template.md instead)
+/scripts/global-claude.md
+
 # uploads (user files, screenshots — not source code)
 /public/uploads/*
 !/public/uploads/.gitkeep
