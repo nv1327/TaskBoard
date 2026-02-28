@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum FeatureStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
+
+enum SubtaskStatus {
+  OPEN
+  DONE
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  repoUrl     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  features    Feature[]
+
+  @@map("projects")
+}
+
+model Feature {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  spec        String?
+  priority    Priority      @default(MEDIUM)
+  status      FeatureStatus @default(BACKLOG)
+  position    Int           @default(0)
+  branchUrl   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  subtasks    Subtask[]
+  attachments Attachment[]
+
+  @@index([projectId, status, position])
+  @@map("features")
+}
+
+model Subtask {
+  id        String        @id @default(cuid())
+  title     String
+  status    SubtaskStatus @default(OPEN)
+  position  Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  featureId String
+  feature   Feature       @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@map("subtasks")
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  createdAt    DateTime @default(now())
+  featureId    String
+  feature      Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}

@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# uploads (user files, screenshots — not source code)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# prisma binary engines (large, platform-specific)
+/node_modules/.prisma
+prisma/engines/
+
+# local DB / data dumps
+*.sql
+*.dump
+*.db
+*.sqlite
