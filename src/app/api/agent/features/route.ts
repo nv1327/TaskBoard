@@ -33,6 +33,7 @@ export async function GET(request: Request) {
         _count: { select: { subtasks: true } },
         subtasks: { select: { id: true, title: true, status: true } },
         project: { select: { id: true, name: true } },
+        milestone: { select: { id: true, name: true } },
       },
     });
 
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
         position: (maxPosition._max.position ?? -1) + 1,
         branchUrl: data.branchUrl || null,
         prUrl: data.prUrl || null,
+        milestoneId: data.milestoneId || null,
         projectId: data.projectId,
       },
     });
@@ -101,6 +103,7 @@ export async function POST(request: Request) {
       include: {
         subtasks: { orderBy: { position: "asc" } },
         project: { select: { id: true, name: true } },
+        milestone: { select: { id: true, name: true } },
       },
     });
 

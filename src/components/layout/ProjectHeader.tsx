@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Plus, GitBranch, ExternalLink, Kanban, Activity, Settings } from "lucide-react";
+import { Plus, GitBranch, ExternalLink, Kanban, Activity, Settings, MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Project {
@@ -18,6 +18,7 @@ export function ProjectHeader({ project }: { project: Project }) {
   const pathname = usePathname();
 
   const isActivity = pathname.endsWith("/activity");
+  const isRoadmap = pathname.endsWith("/roadmap");
   const isSettings = pathname.endsWith("/settings");
 
   async function handleDelete() {
@@ -69,13 +70,25 @@ export function ProjectHeader({ project }: { project: Project }) {
           href={`/projects/${project.id}`}
           className={cn(
             "flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors",
-            !isActivity && !isSettings
+            !isActivity && !isRoadmap && !isSettings
               ? "border-zinc-900 text-zinc-900"
               : "border-transparent text-zinc-400 hover:text-zinc-600"
           )}
         >
           <Kanban className="h-3.5 w-3.5" />
           Board
+        </Link>
+        <Link
+          href={`/projects/${project.id}/roadmap`}
+          className={cn(
+            "flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors",
+            isRoadmap
+              ? "border-zinc-900 text-zinc-900"
+              : "border-transparent text-zinc-400 hover:text-zinc-600"
+          )}
+        >
+          <MapIcon className="h-3.5 w-3.5" />
+          Roadmap
         </Link>
         <Link
           href={`/projects/${project.id}/activity`}

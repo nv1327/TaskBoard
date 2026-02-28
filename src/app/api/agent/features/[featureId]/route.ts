@@ -15,6 +15,7 @@ export async function GET(
         subtasks: { orderBy: { position: "asc" } },
         attachments: { orderBy: { createdAt: "asc" } },
         project: { select: { id: true, name: true } },
+        milestone: { select: { id: true, name: true } },
       },
     });
     if (!feature) {
@@ -101,10 +102,12 @@ export async function PATCH(
         ...(data.status !== undefined && { status: data.status }),
         ...(data.branchUrl !== undefined && { branchUrl: data.branchUrl || null }),
         ...(data.prUrl !== undefined && { prUrl: data.prUrl || null }),
+        ...(data.milestoneId !== undefined && { milestoneId: data.milestoneId || null }),
       },
       include: {
         subtasks: { orderBy: { position: "asc" } },
         project: { select: { id: true, name: true } },
+        milestone: { select: { id: true, name: true } },
       },
     });
 

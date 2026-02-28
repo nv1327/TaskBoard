@@ -77,6 +77,7 @@ export const agentCreateFeatureSchema = z.object({
   status: agentFeatureStatus.optional(),
   branchUrl: z.string().url().optional().or(z.literal("")),
   prUrl: z.string().url().optional().or(z.literal("")),
+  milestoneId: z.string().optional().nullable(),
   subtasks: z.array(z.string().min(1)).optional(),
 });
 
@@ -96,6 +97,7 @@ export const agentUpdateFeatureSchema = z.object({
   status: agentFeatureStatus.optional(),
   branchUrl: z.string().url().optional().nullable().or(z.literal("")),
   prUrl: z.string().url().optional().nullable().or(z.literal("")),
+  milestoneId: z.string().optional().nullable(),
   subtasks: z.array(agentSubtaskUpdateEntry).optional(),
 });
 
