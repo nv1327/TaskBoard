@@ -133,6 +133,9 @@ To prevent feature-branch Prisma migrations from affecting your main dev databas
 PM Board includes two scripts:
 
 ```bash
+# Show which DB you're currently using (sanity check)
+npm run db:which
+
 # On a feature branch: create/switch to branch DB + apply migrations
 npm run db:branch
 

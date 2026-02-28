@@ -11,7 +11,8 @@
     "refresh": "bash scripts/load-context.sh --diff",
     "init-project": "bash scripts/init-project.sh",
     "db:branch": "bash scripts/db-branch.sh",
-    "db:cleanup": "bash scripts/db-cleanup.sh"
+    "db:cleanup": "bash scripts/db-cleanup.sh",
+    "db:which": "bash scripts/db-which.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
