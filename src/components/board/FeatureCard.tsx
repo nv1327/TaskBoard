@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PriorityBadge } from "@/components/layout/PriorityBadge";
 import { Progress } from "@/components/ui/progress";
-import { GitBranch } from "lucide-react";
+import { GitBranch, Link2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Feature } from "@prisma/client";
 
@@ -21,6 +22,15 @@ interface FeatureCardProps {
 export function FeatureCard({ feature, projectId, overlay }: FeatureCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: feature.id });
+  const [copied, setCopied] = useState(false);
+
+  function copyUrl(e: React.MouseEvent) {
+    e.stopPropagation();
+    const url = `${window.location.origin}/projects/${projectId}/features/${feature.id}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -66,9 +76,21 @@ export function FeatureCard({ feature, projectId, overlay }: FeatureCardProps) {
 
         <div className="mt-3 flex items-center justify-between gap-2">
           <PriorityBadge priority={feature.priority} />
-          {feature.branchUrl && (
-            <GitBranch className="h-3 w-3 text-zinc-400" />
-          )}
+          <div className="flex items-center gap-1.5">
+            {feature.branchUrl && (
+              <GitBranch className="h-3 w-3 text-zinc-400" />
+            )}
+            <button
+              onClick={copyUrl}
+              className="pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Copy feature URL"
+            >
+              {copied
+                ? <Check className="h-3 w-3 text-green-500" />
+                : <Link2 className="h-3 w-3 text-zinc-400 hover:text-zinc-600" />
+              }
+            </button>
+          </div>
         </div>
 
         {totalSubtasks > 0 && (
