@@ -10,6 +10,8 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const format = searchParams.get("format") ?? "markdown"; // markdown | json
 
+  const ACTIVITY_LIMIT = 5;
+
   const [project, recentChangesRaw] = await Promise.all([
     prisma.project.findUnique({
       where: { id: projectId },
@@ -25,7 +27,7 @@ export async function GET(
     prisma.changeLog.findMany({
       where: { projectId },
       orderBy: { createdAt: "desc" },
-      take: 10,
+      take: 20,
     }),
   ]);
 
@@ -33,7 +35,7 @@ export async function GET(
     return NextResponse.json({ ok: false, error: "Project not found" }, { status: 404 });
   }
 
-  const recentChanges = dedupeChangeLogs(recentChangesRaw).slice(0, 10);
+  const recentChanges = dedupeChangeLogs(recentChangesRaw).slice(0, ACTIVITY_LIMIT);
 
   if (format === "json") {
     return NextResponse.json({ ok: true, data: project });
@@ -106,6 +108,10 @@ export async function GET(
 - **Name:** ${project.name}
 - **ID:** \`${project.id}\`${project.description ? `\n- **Description:** ${project.description}` : ""}${project.repoUrl ? `\n- **Repository:** ${project.repoUrl}` : ""}
 - **Generated:** ${new Date().toISOString()}
+
+## Mission / Context
+
+${project.contextMd ? project.contextMd : "_No project mission/context markdown yet. Add it in Project Settings or via API (`contextMd`)._"}
 
 ## Summary
 

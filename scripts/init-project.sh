@@ -10,9 +10,10 @@
 # Options:
 #   --name        Project name (required)
 #   --description Short description
-#   --repo        GitHub repo URL
-#   --dir         Target directory to write .pm-board.md (default: current dir)
-#   --url         PM Board base URL (default: http://localhost:3000)
+#   --repo         GitHub repo URL
+#   --context-file Path to a markdown file to store as project mission/context
+#   --dir          Target directory to write .pm-board.md (default: current dir)
+#   --url          PM Board base URL (default: http://localhost:3000)
 #
 # Examples:
 #   ./scripts/init-project.sh --name "My App" --repo "https://github.com/you/my-app" --dir ~/Projects/my-app
@@ -24,6 +25,8 @@ PM_BOARD_URL="${PM_BOARD_URL:-http://localhost:3000}"
 PROJECT_NAME=""
 PROJECT_DESCRIPTION=""
 PROJECT_REPO=""
+PROJECT_CONTEXT_FILE=""
+PROJECT_CONTEXT_MD=""
 TARGET_DIR="."
 
 # Parse args
@@ -31,17 +34,26 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --name)        PROJECT_NAME="$2";        shift 2 ;;
     --description) PROJECT_DESCRIPTION="$2"; shift 2 ;;
-    --repo)        PROJECT_REPO="$2";        shift 2 ;;
-    --dir)         TARGET_DIR="$2";          shift 2 ;;
-    --url)         PM_BOARD_URL="$2";        shift 2 ;;
+    --repo)         PROJECT_REPO="$2";         shift 2 ;;
+    --context-file) PROJECT_CONTEXT_FILE="$2"; shift 2 ;;
+    --dir)          TARGET_DIR="$2";           shift 2 ;;
+    --url)          PM_BOARD_URL="$2";         shift 2 ;;
     *) echo "Unknown argument: $1"; exit 1 ;;
   esac
 done
 
 if [[ -z "$PROJECT_NAME" ]]; then
   echo "Error: --name is required"
-  echo "Usage: $0 --name \"My Project\" [--description \"...\"] [--repo \"https://...\"] [--dir ./path]"
+  echo "Usage: $0 --name \"My Project\" [--description \"...\"] [--repo \"https://...\"] [--context-file ./MISSION.md] [--dir ./path]"
   exit 1
+fi
+
+if [[ -n "$PROJECT_CONTEXT_FILE" ]]; then
+  if [[ ! -f "$PROJECT_CONTEXT_FILE" ]]; then
+    echo "Error: --context-file not found: $PROJECT_CONTEXT_FILE"
+    exit 1
+  fi
+  PROJECT_CONTEXT_MD="$(cat "$PROJECT_CONTEXT_FILE")"
 fi
 
 # Check PM Board is running
@@ -53,11 +65,18 @@ fi
 
 echo "Creating PM Board project: $PROJECT_NAME..."
 
-# Build JSON payload
-PAYLOAD=$(printf '{"name":"%s","description":"%s","repoUrl":"%s"}' \
-  "$PROJECT_NAME" \
-  "$PROJECT_DESCRIPTION" \
-  "$PROJECT_REPO")
+# Build JSON payload safely (handles quotes/newlines)
+PAYLOAD=$(python3 - "$PROJECT_NAME" "$PROJECT_DESCRIPTION" "$PROJECT_REPO" "$PROJECT_CONTEXT_MD" <<'PY'
+import json, sys
+name, description, repo, context_md = sys.argv[1:5]
+print(json.dumps({
+  "name": name,
+  "description": description,
+  "repoUrl": repo,
+  "contextMd": context_md,
+}))
+PY
+)
 
 # Create the project
 RESPONSE=$(curl -sf -X POST "$PM_BOARD_URL/api/projects" \

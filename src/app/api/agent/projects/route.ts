@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { agentCreateProjectSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -23,5 +24,28 @@ export async function GET() {
     return NextResponse.json({ ok: true, data });
   } catch {
     return NextResponse.json({ ok: false, error: "Failed to fetch projects" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const data = agentCreateProjectSchema.parse(body);
+
+    const project = await prisma.project.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        contextMd: data.contextMd,
+        repoUrl: data.repoUrl || null,
+      },
+    });
+
+    return NextResponse.json({ ok: true, data: project }, { status: 201 });
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "issues" in error) {
+      return NextResponse.json({ ok: false, error: "Validation failed", details: error }, { status: 400 });
+    }
+    return NextResponse.json({ ok: false, error: "Failed to create project" }, { status: 500 });
   }
 }

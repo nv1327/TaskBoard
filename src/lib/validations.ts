@@ -6,6 +6,7 @@ import { Priority, FeatureStatus, SubtaskStatus } from "@prisma/client";
 export const createProjectSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().optional(),
+  contextMd: z.string().optional(),
   repoUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
@@ -101,8 +102,16 @@ export const agentFeaturesQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
 });
 
+export const agentCreateProjectSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().optional(),
+  contextMd: z.string().optional(),
+  repoUrl: z.string().url().optional().or(z.literal("")),
+});
+
 export const agentUpdateProjectSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().optional().nullable(),
+  contextMd: z.string().optional().nullable(),
   repoUrl: z.string().url().optional().nullable().or(z.literal("")),
 });

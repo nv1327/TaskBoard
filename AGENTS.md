@@ -36,15 +36,20 @@ curl -s "http://localhost:3000/api/agent/features?projectId=<id>&status=backlog"
 curl http://localhost:3000/api/agent/projects
 ```
 
-### Get / update a project
+### Create / get / update a project
 ```bash
+# Create with mission/context markdown
+curl -X POST http://localhost:3000/api/agent/projects \
+  -H "Content-Type: application/json" \
+  -d '{"name":"My Project","contextMd":"## Mission\n..."}'
+
 # Get one project
 curl http://localhost:3000/api/agent/projects/<projectId>
 
-# Rename project / update repo URL
+# Rename project / update repo URL / mission markdown
 curl -X PATCH http://localhost:3000/api/agent/projects/<projectId> \
   -H "Content-Type: application/json" \
-  -d '{"name":"Renamed Project","repoUrl":"https://github.com/org/repo"}'
+  -d '{"name":"Renamed Project","repoUrl":"https://github.com/org/repo","contextMd":"## Updated mission\n..."}'
 ```
 
 ### Search features

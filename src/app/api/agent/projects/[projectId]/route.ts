@@ -24,6 +24,7 @@ export async function GET(
         id: project.id,
         name: project.name,
         description: project.description,
+        contextMd: project.contextMd,
         repoUrl: project.repoUrl,
         featureCount: project._count.features,
         createdAt: project.createdAt,
@@ -50,6 +51,7 @@ export async function PATCH(
       data: {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.description !== undefined && { description: data.description }),
+        ...(data.contextMd !== undefined && { contextMd: data.contextMd }),
         ...(data.repoUrl !== undefined && { repoUrl: data.repoUrl || null }),
       },
     });

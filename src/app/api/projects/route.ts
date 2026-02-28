@@ -24,6 +24,7 @@ export async function POST(request: Request) {
       data: {
         name: data.name,
         description: data.description,
+        contextMd: data.contextMd,
         repoUrl: data.repoUrl || null,
       },
     });

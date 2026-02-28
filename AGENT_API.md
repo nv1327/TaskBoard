@@ -39,9 +39,23 @@ curl http://localhost:3000/api/agent/projects
 
 ---
 
+### POST /api/agent/projects
+
+Create a project.
+
+**Request body:**
+```json
+{
+  "name": "New Project",
+  "description": "Short summary",
+  "contextMd": "## Mission\n\nDetailed markdown context...",
+  "repoUrl": "https://github.com/org/new-repo"
+}
+```
+
 ### GET /api/agent/projects/:id
 
-Get one project.
+Get one project (includes `contextMd`).
 
 **Example:**
 ```bash
@@ -57,6 +71,7 @@ Update project metadata.
 {
   "name": "New project name",
   "description": "Updated description",
+  "contextMd": "## Updated mission\n\n...",
   "repoUrl": "https://github.com/org/new-repo"
 }
 ```

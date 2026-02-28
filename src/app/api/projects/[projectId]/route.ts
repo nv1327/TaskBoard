@@ -28,6 +28,7 @@ export async function PATCH(
       data: {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.description !== undefined && { description: data.description }),
+        ...(data.contextMd !== undefined && { contextMd: data.contextMd }),
         ...(data.repoUrl !== undefined && { repoUrl: data.repoUrl || null }),
       },
     });

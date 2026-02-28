@@ -168,7 +168,7 @@ Project  ──< Feature ──< Subtask
 
 | Model | Key fields |
 |---|---|
-| `Project` | name, description, repoUrl |
+| `Project` | name, description, contextMd (markdown mission/context), repoUrl |
 | `Feature` | title, description, spec (markdown), priority, status, position, branchUrl |
 | `Subtask` | title, status (OPEN/DONE), position |
 | `Attachment` | filename, originalName, mimeType, size, url |
