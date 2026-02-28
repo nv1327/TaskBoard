@@ -44,11 +44,17 @@ export function BoardView({ initialFeatures, projectId }: BoardViewProps) {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
+  const PRIORITY_ORDER: Record<string, number> = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+
   const featuresByStatus = useCallback(
     (status: FeatureStatus) =>
       features
         .filter((f) => f.status === status)
-        .sort((a, b) => a.position - b.position),
+        .sort(
+          (a, b) =>
+            (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99) ||
+            a.position - b.position
+        ),
     [features]
   );
 
