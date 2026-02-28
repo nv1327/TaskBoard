@@ -23,6 +23,7 @@ export const createFeatureSchema = z.object({
   position: z.number().int().optional(),
   branchUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   prUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  milestoneId: z.string().optional().nullable(),
   projectId: z.string().cuid(),
 });
 
@@ -35,6 +36,7 @@ export const updateFeatureSchema = z.object({
   position: z.number().int().optional(),
   branchUrl: z.string().url().optional().nullable().or(z.literal("")),
   prUrl: z.string().url().optional().nullable().or(z.literal("")),
+  milestoneId: z.string().optional().nullable(),
 });
 
 // ── Subtask ───────────────────────────────────────────────────────────────────

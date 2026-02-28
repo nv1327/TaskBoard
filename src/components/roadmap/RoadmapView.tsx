@@ -97,11 +97,15 @@ const PRIORITY_LABELS: Record<string, string> = {
 function FeatureRow({
   feature,
   projectId,
+  milestones,
   onStatusChange,
+  onMilestoneChange,
 }: {
   feature: Feature;
   projectId: string;
+  milestones: { id: string; name: string }[];
   onStatusChange: (featureId: string, status: string) => void;
+  onMilestoneChange: (featureId: string, milestoneId: string | null) => void;
 }) {
   const done = feature.subtasks.filter((s) => s.status === "DONE").length;
   const total = feature.subtasks.length;
@@ -142,6 +146,18 @@ function FeatureRow({
         )}
       </div>
 
+      {/* Inline milestone select */}
+      <select
+        value={feature.milestoneId ?? "__none__"}
+        onChange={(e) => onMilestoneChange(feature.id, e.target.value === "__none__" ? null : e.target.value)}
+        className="shrink-0 cursor-pointer rounded border border-zinc-200 bg-white px-2 py-0.5 text-xs text-zinc-500 focus:ring-1 focus:ring-zinc-300"
+      >
+        <option value="__none__">Unscheduled</option>
+        {milestones.map((m) => (
+          <option key={m.id} value={m.id}>{m.name}</option>
+        ))}
+      </select>
+
       {/* Inline status select */}
       <select
         value={feature.status}
@@ -166,15 +182,19 @@ function FeatureRow({
 function MilestoneCard({
   milestone,
   projectId,
+  milestones,
   onUpdate,
   onDelete,
   onStatusChange,
+  onMilestoneChange,
 }: {
   milestone: Milestone;
   projectId: string;
+  milestones: { id: string; name: string }[];
   onUpdate: (id: string, name: string, description: string, targetDate: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onStatusChange: (featureId: string, status: string) => void;
+  onMilestoneChange: (featureId: string, milestoneId: string | null) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -308,7 +328,9 @@ function MilestoneCard({
                 key={f.id}
                 feature={f}
                 projectId={projectId}
+                milestones={milestones}
                 onStatusChange={onStatusChange}
+                onMilestoneChange={onMilestoneChange}
               />
             ))
           )}
@@ -323,11 +345,15 @@ function MilestoneCard({
 function UnscheduledSection({
   features,
   projectId,
+  milestones,
   onStatusChange,
+  onMilestoneChange,
 }: {
   features: Feature[];
   projectId: string;
+  milestones: { id: string; name: string }[];
   onStatusChange: (featureId: string, status: string) => void;
+  onMilestoneChange: (featureId: string, milestoneId: string | null) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -350,7 +376,9 @@ function UnscheduledSection({
               key={f.id}
               feature={f}
               projectId={projectId}
+              milestones={milestones}
               onStatusChange={onStatusChange}
+              onMilestoneChange={onMilestoneChange}
             />
           ))}
         </div>
@@ -514,7 +542,6 @@ export function RoadmapView({
 
   const handleStatusChange = useCallback(
     async (featureId: string, status: string) => {
-      // Optimistic update
       setFeatures((prev) => prev.map((f) => (f.id === featureId ? { ...f, status } : f)));
       setMilestones((prev) =>
         prev.map((m) => ({
@@ -522,7 +549,6 @@ export function RoadmapView({
           features: m.features.map((f) => (f.id === featureId ? { ...f, status } : f)),
         }))
       );
-
       await fetch(`/api/projects/${projectId}/features/${featureId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -530,6 +556,37 @@ export function RoadmapView({
       });
     },
     [projectId]
+  );
+
+  // ── Inline feature milestone change ──
+
+  const handleMilestoneChange = useCallback(
+    async (featureId: string, milestoneId: string | null) => {
+      // Update flat features list
+      setFeatures((prev) =>
+        prev.map((f) => (f.id === featureId ? { ...f, milestoneId } : f))
+      );
+      // Move the feature between milestone.features arrays
+      setMilestones((prev) => {
+        const feature = prev.flatMap((m) => m.features).find((f) => f.id === featureId)
+          ?? features.find((f) => f.id === featureId);
+        if (!feature) return prev;
+        const updatedFeature = { ...feature, milestoneId };
+        return prev.map((m) => {
+          const withoutFeature = m.features.filter((f) => f.id !== featureId);
+          if (m.id === milestoneId) {
+            return { ...m, features: [...withoutFeature, updatedFeature] };
+          }
+          return { ...m, features: withoutFeature };
+        });
+      });
+      await fetch(`/api/projects/${projectId}/features/${featureId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ milestoneId }),
+      });
+    },
+    [projectId, features]
   );
 
   return (
@@ -574,9 +631,11 @@ export function RoadmapView({
                 key={m.id}
                 milestone={m}
                 projectId={projectId}
+                milestones={milestones}
                 onUpdate={handleUpdateMilestone}
                 onDelete={handleDeleteMilestone}
                 onStatusChange={handleStatusChange}
+                onMilestoneChange={handleMilestoneChange}
               />
             ))}
           </div>
@@ -587,7 +646,9 @@ export function RoadmapView({
       <UnscheduledSection
         features={unscheduled}
         projectId={projectId}
+        milestones={milestones}
         onStatusChange={handleStatusChange}
+        onMilestoneChange={handleMilestoneChange}
       />
     </div>
   );

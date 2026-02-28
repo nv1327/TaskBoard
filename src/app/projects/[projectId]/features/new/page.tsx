@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { FeatureForm } from "@/components/features/FeatureForm";
 
 export default async function NewFeaturePage({
@@ -6,11 +7,18 @@ export default async function NewFeaturePage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
+
+  const milestones = await prisma.milestone.findMany({
+    where: { projectId },
+    orderBy: { position: "asc" },
+    select: { id: true, name: true },
+  });
+
   return (
     <div className="h-full overflow-y-auto p-8">
       <div className="mx-auto max-w-2xl">
         <h1 className="mb-6 text-xl font-semibold text-zinc-900">Create feature</h1>
-        <FeatureForm projectId={projectId} />
+        <FeatureForm projectId={projectId} milestones={milestones} />
       </div>
     </div>
   );

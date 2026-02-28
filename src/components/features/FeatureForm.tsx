@@ -10,9 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SpecEditor } from "./SpecEditor";
 import type { Feature, Priority, FeatureStatus } from "@prisma/client";
 
+interface MilestoneSummary {
+  id: string;
+  name: string;
+}
+
 interface FeatureFormProps {
   projectId: string;
-  feature?: Feature;
+  feature?: Feature & { milestoneId?: string | null };
+  milestones?: MilestoneSummary[];
   onSuccess?: () => void;
 }
 
@@ -28,7 +34,7 @@ const STATUS_LABELS: Record<FeatureStatus, string> = {
   CANCELLED: "Cancelled",
 };
 
-export function FeatureForm({ projectId, feature, onSuccess }: FeatureFormProps) {
+export function FeatureForm({ projectId, feature, milestones = [], onSuccess }: FeatureFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +46,7 @@ export function FeatureForm({ projectId, feature, onSuccess }: FeatureFormProps)
     status: feature?.status ?? "BACKLOG" as FeatureStatus,
     branchUrl: feature?.branchUrl ?? "",
     prUrl: feature?.prUrl ?? "",
+    milestoneId: feature?.milestoneId ?? "",
   });
 
   const isEdit = !!feature;
@@ -162,6 +169,28 @@ export function FeatureForm({ projectId, feature, onSuccess }: FeatureFormProps)
           placeholder="https://github.com/org/repo/pull/123"
         />
       </div>
+
+      {milestones.length > 0 && (
+        <div className="space-y-1.5">
+          <Label>Milestone</Label>
+          <Select
+            value={form.milestoneId || "__none__"}
+            onValueChange={(v) => setForm((f) => ({ ...f, milestoneId: v === "__none__" ? "" : v }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Unscheduled" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">Unscheduled</SelectItem>
+              {milestones.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <Label>Full specification (Markdown)</Label>
