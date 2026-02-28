@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-type CopyKind = "id" | "context" | "linkfile" | "refresh";
+type CopyKind = "id" | "context" | "linkfile" | "refresh" | "bootstrap";
 
 export function ProjectAgentLinkCard({ projectId }: { projectId: string }) {
   const [copied, setCopied] = useState<CopyKind | null>(null);
@@ -17,6 +17,7 @@ export function ProjectAgentLinkCard({ projectId }: { projectId: string }) {
   const contextCmd = `curl -s http://localhost:3000/api/agent/projects/${projectId}/context`;
   const linkFileCmd = `cat > .pm-board.md <<'EOF'\n---\npm_board_project_id: ${projectId}\npm_board_url: http://localhost:3000\n---\nEOF`;
   const refreshCmd = `/path/to/pm-board/scripts/load-context.sh`;
+  const bootstrapPrompt = `Before doing anything else:\n1) Load PM Board context: ${contextCmd}\n2) Never code on main. Create/use a feature branch unless I explicitly tell you otherwise.\n3) Implement only todo features (not backlog), unless I explicitly override.\n4) Keep PM Board synced: set in_progress + branchUrl, update subtasks, then in_review + prUrl.\n5) Stop at in_review and wait for human approval before merge.`;
 
   return (
     <div className="rounded-md border border-zinc-200 bg-white p-4">
@@ -45,12 +46,16 @@ export function ProjectAgentLinkCard({ projectId }: { projectId: string }) {
           <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => copy(refreshCmd, "refresh")}>
             {copied === "refresh" ? "Copied command" : "Copy refresh script command"}
           </Button>
+          <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs sm:col-span-2" onClick={() => copy(bootstrapPrompt, "bootstrap")}>
+            {copied === "bootstrap" ? "Copied bootstrap prompt" : "Copy new-session/model-switch bootstrap prompt"}
+          </Button>
         </div>
 
         <ol className="mt-1 list-decimal space-y-1 pl-4 text-xs text-zinc-600">
           <li>In your target repo root, run the copied <span className="font-medium">.pm-board.md command</span>.</li>
-          <li>Fetch context using the copied context command (or the refresh script).</li>
-          <li>Ask your agent to keep PM Board statuses/subtasks synced while coding.</li>
+          <li>At every new agent session or model switch, run the context command (or refresh script).</li>
+          <li>Paste the <span className="font-medium">bootstrap prompt</span> so the agent re-locks to workflow rules.</li>
+          <li>Core rule: feature work happens on feature branches — never on <code className="rounded bg-zinc-100 px-1 py-0.5">main</code> unless explicitly instructed.</li>
         </ol>
       </div>
     </div>
