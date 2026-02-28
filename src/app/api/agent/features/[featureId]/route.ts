@@ -37,36 +37,56 @@ export async function PATCH(
 
     const before = await prisma.feature.findUnique({ where: { id: featureId } });
 
-    // Update subtask statuses and log each change
-    if (data.subtasks && data.subtasks.length > 0) {
+    // Split subtask entries: strings → create new, objects → update existing
+    const subtaskCreates = (data.subtasks ?? []).filter((s): s is string => typeof s === "string");
+    const subtaskUpdates = (data.subtasks ?? []).filter(
+      (s): s is { id: string; status: "DONE" | "OPEN" } => typeof s === "object"
+    );
+
+    // Create new subtasks
+    if (subtaskCreates.length > 0 && before) {
+      const maxPos = await prisma.subtask.aggregate({
+        where: { featureId },
+        _max: { position: true },
+      });
+      let nextPos = (maxPos._max.position ?? -1) + 1;
+      await Promise.all(
+        subtaskCreates.map((title) =>
+          prisma.subtask.create({
+            data: { title, featureId, position: nextPos++ },
+          })
+        )
+      );
+    }
+
+    // Update existing subtask statuses and log each change
+    if (subtaskUpdates.length > 0 && before) {
       const subtasksBefore = await prisma.subtask.findMany({
-        where: { id: { in: data.subtasks.map((s) => s.id) } },
+        where: { id: { in: subtaskUpdates.map((s) => s.id) } },
       });
       await Promise.all(
-        data.subtasks.map((s) =>
+        subtaskUpdates.map((s) =>
           prisma.subtask.update({ where: { id: s.id }, data: { status: s.status } })
         )
       );
-      if (before) {
-        for (const s of data.subtasks) {
-          const prev = subtasksBefore.find((sb) => sb.id === s.id);
-          if (prev && prev.status !== s.status) {
-            const action = s.status === "DONE" ? "SUBTASK_DONE" : "SUBTASK_REOPENED";
-            await log({
-              action,
-              summary:
-                s.status === "DONE"
-                  ? `Subtask completed: "${prev.title}" in "${before.title}"`
-                  : `Subtask reopened: "${prev.title}" in "${before.title}"`,
-              projectId: before.projectId,
-              featureId,
-              featureTitle: before.title,
-              subtaskId: s.id,
-              subtaskTitle: prev.title,
-              source: "agent",
-              meta: { from: prev.status, to: s.status },
-            });
-          }
+      for (const s of subtaskUpdates) {
+        const prev = subtasksBefore.find((sb) => sb.id === s.id);
+        if (prev && prev.status !== s.status) {
+          const action = s.status === "DONE" ? "SUBTASK_DONE" : "SUBTASK_REOPENED";
+          await log({
+            action,
+            summary:
+              s.status === "DONE"
+                ? `Subtask completed: "${prev.title}" in "${before.title}"`
+                : `Subtask reopened: "${prev.title}" in "${before.title}"`,
+            projectId: before.projectId,
+            featureId,
+            featureTitle: before.title,
+            subtaskId: s.id,
+            subtaskTitle: prev.title,
+            source: "agent",
+            meta: { from: prev.status, to: s.status },
+          });
         }
       }
     }

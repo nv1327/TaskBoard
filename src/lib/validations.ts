@@ -80,6 +80,14 @@ export const agentCreateFeatureSchema = z.object({
   subtasks: z.array(z.string().min(1)).optional(),
 });
 
+// A subtask entry in a PATCH can be either:
+//   - a string  → create a new subtask with that title
+//   - { id, status } → update the status of an existing subtask
+export const agentSubtaskUpdateEntry = z.union([
+  z.string().min(1).max(500),
+  z.object({ id: z.string(), status: agentSubtaskStatus }),
+]);
+
 export const agentUpdateFeatureSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   description: z.string().optional().nullable(),
@@ -88,14 +96,7 @@ export const agentUpdateFeatureSchema = z.object({
   status: agentFeatureStatus.optional(),
   branchUrl: z.string().url().optional().nullable().or(z.literal("")),
   prUrl: z.string().url().optional().nullable().or(z.literal("")),
-  subtasks: z
-    .array(
-      z.object({
-        id: z.string(),
-        status: agentSubtaskStatus,
-      })
-    )
-    .optional(),
+  subtasks: z.array(agentSubtaskUpdateEntry).optional(),
 });
 
 export const agentFeaturesQuerySchema = z.object({
