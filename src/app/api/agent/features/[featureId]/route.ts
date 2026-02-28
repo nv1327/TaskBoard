@@ -134,6 +134,17 @@ export async function PATCH(
           meta: { from: before.priority, to: data.priority },
         });
       }
+      if (data.title !== undefined && before.title !== data.title) {
+        await log({
+          action: "FEATURE_UPDATED",
+          summary: `Feature title changed: "${before.title}" → "${feature.title}"`,
+          projectId: before.projectId,
+          featureId,
+          featureTitle: feature.title,
+          source: "agent",
+          meta: { field: "title", from: before.title, to: feature.title },
+        });
+      }
       if (data.spec !== undefined && before.spec !== data.spec) {
         await log({
           action: "SPEC_UPDATED",

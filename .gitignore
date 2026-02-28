@@ -58,3 +58,6 @@ prisma/engines/
 *.dump
 *.db
 *.sqlite
+
+# per-repo PM Board link file (personal/local)
+.pm-board.md

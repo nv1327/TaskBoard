@@ -12,7 +12,9 @@
     "init-project": "bash scripts/init-project.sh",
     "db:branch": "bash scripts/db-branch.sh",
     "db:cleanup": "bash scripts/db-cleanup.sh",
-    "db:which": "bash scripts/db-which.sh"
+    "db:which": "bash scripts/db-which.sh",
+    "test:api": "bash scripts/test-api.sh",
+    "test": "npm run lint && npm run test:api"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
