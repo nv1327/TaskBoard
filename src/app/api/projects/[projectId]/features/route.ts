@@ -52,6 +52,7 @@ export async function POST(
         position: (maxPosition._max.position ?? -1) + 1,
         branchUrl: data.branchUrl || null,
         prUrl: data.prUrl || null,
+        milestoneId: data.milestoneId || null,
         projectId,
       },
     });

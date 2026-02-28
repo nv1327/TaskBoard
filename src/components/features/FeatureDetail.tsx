@@ -16,6 +16,11 @@ const MarkdownPreview = dynamic(() => import("@uiw/react-md-editor").then((m) =>
 
 type FullFeature = Feature & { subtasks: Subtask[]; attachments: Attachment[] };
 
+interface MilestoneSummary {
+  id: string;
+  name: string;
+}
+
 const STATUS_LABELS: Record<FeatureStatus, string> = {
   BACKLOG: "Backlog",
   TODO: "Todo",
@@ -28,7 +33,15 @@ const STATUS_LABELS: Record<FeatureStatus, string> = {
 const STATUSES: FeatureStatus[] = ["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "DONE", "CANCELLED"];
 const PRIORITIES: Priority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
 
-export function FeatureDetail({ feature: initial, projectId }: { feature: FullFeature; projectId: string }) {
+export function FeatureDetail({
+  feature: initial,
+  projectId,
+  milestones = [],
+}: {
+  feature: FullFeature & { milestoneId?: string | null };
+  projectId: string;
+  milestones?: MilestoneSummary[];
+}) {
   const router = useRouter();
   const [feature, setFeature] = useState(initial);
   const [editingSpec, setEditingSpec] = useState(false);
@@ -121,6 +134,25 @@ export function FeatureDetail({ feature: initial, projectId }: { feature: FullFe
               ))}
             </SelectContent>
           </Select>
+
+          {milestones.length > 0 && (
+            <Select
+              value={feature.milestoneId ?? "__none__"}
+              onValueChange={(v) => patch({ milestoneId: v === "__none__" ? null : v } as Partial<Feature>)}
+            >
+              <SelectTrigger className="h-6 w-36 border-0 bg-zinc-100 px-2 py-0 text-xs">
+                <SelectValue placeholder="Unscheduled" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__" className="text-xs">Unscheduled</SelectItem>
+                {milestones.map((m) => (
+                  <SelectItem key={m.id} value={m.id} className="text-xs">
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <span className="text-xs text-zinc-400">
             Updated {formatDateTime(feature.updatedAt)}

@@ -69,6 +69,7 @@ export async function PATCH(
         ...(data.status !== undefined && { status: data.status }),
         ...(data.branchUrl !== undefined && { branchUrl: data.branchUrl || null }),
         ...(data.prUrl !== undefined && { prUrl: data.prUrl || null }),
+        ...(data.milestoneId !== undefined && { milestoneId: data.milestoneId || null }),
       },
     });
 

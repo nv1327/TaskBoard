@@ -12,7 +12,7 @@ export async function GET(
 
   const ACTIVITY_LIMIT = 5;
 
-  const [project, recentChangesRaw] = await Promise.all([
+  const [project, milestones, recentChangesRaw] = await Promise.all([
     prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -23,6 +23,10 @@ export async function GET(
           },
         },
       },
+    }),
+    prisma.milestone.findMany({
+      where: { projectId },
+      orderBy: { position: "asc" },
     }),
     prisma.changeLog.findMany({
       where: { projectId },
@@ -123,6 +127,32 @@ ${project.contextMd ? project.contextMd : "_No project mission/context markdown 
 | Done | ${done} |
 | **Total** | **${total}** |
 
+## Milestones
+
+${
+  milestones.length === 0
+    ? "_No milestones yet. Create them via the Roadmap view or API._"
+    : milestones
+        .map((m) => {
+          const mFeatures = project!.features.filter(
+            (f) => (f as typeof f & { milestoneId?: string | null }).milestoneId === m.id
+          );
+          const date = m.targetDate
+            ? ` · ${new Date(m.targetDate).toISOString().slice(0, 10)}`
+            : "";
+          const counts = mFeatures.length
+            ? ` (${mFeatures.length} feature${mFeatures.length === 1 ? "" : "s"})`
+            : " (empty)";
+          const featureList = mFeatures.length
+            ? mFeatures
+                .map((f) => `  - [${f.status}] ${f.title} · \`${f.id}\``)
+                .join("\n")
+            : "  _No features assigned_";
+          return `### ${m.name}${date}${counts}\n\`${m.id}\`\n${featureList}`;
+        })
+        .join("\n\n")
+}
+
 ## Features
 
 ${featuresSections || "_No features yet._"}
@@ -184,11 +214,18 @@ curl -X PATCH ${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agen
 curl -s "${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agent/projects/${project.id}/context"
 \`\`\`
 
-**Create a new feature:**
+**Create a new feature (optionally assign to a milestone):**
 \`\`\`bash
 curl -X POST ${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agent/features \\
   -H "Content-Type: application/json" \\
-  -d '{"projectId": "${project.id}", "title": "...", "priority": "medium", "status": "backlog"}'
+  -d '{"projectId": "${project.id}", "title": "...", "priority": "medium", "status": "backlog", "milestoneId": "<milestoneId>"}'
+\`\`\`
+
+**Create a milestone:**
+\`\`\`bash
+curl -X POST ${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agent/projects/${project.id}/milestones \\
+  -H "Content-Type: application/json" \\
+  -d '{"name": "v1.0", "description": "Initial release"}'
 \`\`\`
 
 After any update, re-fetch this document to confirm the change is reflected.
