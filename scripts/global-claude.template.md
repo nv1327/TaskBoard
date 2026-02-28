@@ -21,13 +21,12 @@ cat scripts/global-claude.md >> ~/.claude/CLAUDE.md
 Whenever you scaffold or initialise a new software project for me, **always** register it
 in PM Board immediately after creating the project directory. Do this without being asked.
 
-Run the following:
-
 ```bash
 <PM_BOARD_DIR>/scripts/init-project.sh \
   --name "<project name>" \
   --description "<one-line description>" \
   --repo "<github url if known>" \
+  --context-file "<path to spec .md if available>" \
   --dir "<path to new project root>"
 ```
 
@@ -37,54 +36,117 @@ This will:
 
 After running it, confirm to me with the PM Board project URL so I can open it.
 
+---
+
+## Project size and workflow gates
+
+PM Board uses feature statuses as explicit human approval gates. Follow the right workflow for the project size:
+
+### Small / well-defined projects
+Jump straight to the [Coding workflow](#coding-workflow) below.
+
+### Large / greenfield projects — use the two-gate model
+
+**Gate 1: Roadmap approval** (before any spec or code is written)
+
+1. Read the full project context including the mission/contextMd.
+2. Think through the problem space. Identify the major areas of work and a logical build order.
+3. Propose a roadmap: create one feature per proposed work item in `backlog` status, with a title and a one-paragraph description. No spec yet — keep it lightweight enough for the human to scan and edit quickly:
+```bash
+curl -X POST <PM_BOARD_URL>/api/agent/features \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectId": "<id>",
+    "title": "Proposed feature title",
+    "description": "One paragraph: what this is, why it matters, rough scope.",
+    "priority": "medium",
+    "status": "backlog"
+  }'
+```
+4. After creating all proposed features, summarise the roadmap to the human: what you're proposing, the rationale for ordering, and any open questions.
+5. **Stop. Wait for Gate 1 approval.** The human will review in the PM Board UI, edit titles/descriptions, reorder, delete features they don't want, and promote approved ones to `todo`. Do not write specs or code until a feature reaches `todo`.
+
+**Gate 2: Code review** (after implementation — see [Coding workflow](#coding-workflow) below)
+
+The human reviews each PR before it merges to `main`. This is the production safety gate.
+
+---
+
 ## Starting a session in an existing project
 
 If the current working directory (or any parent) contains a `.pm-board.md` file, load the
 project context before doing any work:
 
 ```bash
-# Read the project ID from .pm-board.md
 PROJECT_ID=$(grep -m1 "^pm_board_project_id:" .pm-board.md | sed 's/pm_board_project_id:[[:space:]]*//')
-
-# Fetch and display context
 curl -s "<PM_BOARD_URL>/api/agent/projects/$PROJECT_ID/context"
 ```
 
-Use the returned context — feature titles, specs, subtask checklists, statuses — to understand
-what is in progress before making any changes.
+Read the returned context fully — feature titles, specs, subtask checklists, statuses, branch/PR links — before making any changes.
 
-## Updating PM Board during a session
+---
 
-After **any** of the following events, update PM Board and then refresh context:
+## Coding workflow (follow this for every feature, without being asked)
 
-| Event | Action |
-|---|---|
-| Subtask completed | PATCH feature with subtask status `done` |
-| Feature finished | PATCH feature status to `done` or `in_review` |
-| New work identified | POST a new feature to backlog |
-| Blocked or scope changed | PATCH feature status + update spec |
+> For large projects, only implement features that are in `todo` status (human-approved). Do not implement `backlog` features that haven't been through Gate 1.
 
+1. **Pick** the next `todo` feature from the context document. If the feature has no spec yet (the human approved it from the roadmap proposal), write the full spec now and `PATCH` it before starting implementation:
 ```bash
-# Mark a subtask done
+curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
+  -H "Content-Type: application/json" \
+  -d '{"spec": "## Goal\n\n...\n\n## Acceptance criteria\n\n- ...\n\n## Subtasks\n\n- ..."}'
+```
+2. **Create a branch** named `feat/<short-slug>` from `main`. At this point, before writing any code:
+   - Create a `.gitignore` appropriate for the language (`.venv/`, `__pycache__/`, `node_modules/`, build artifacts, etc.)
+   - Set up the test environment now (e.g. `python3 -m venv .venv && .venv/bin/pip install pytest`). Do not wait until after implementation — a broken test environment at PR time is a blocker.
+3. **Move the feature to `in_progress`** and record the branch URL. Verify the response:
+```bash
+curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
+  -H "Content-Type: application/json" \
+  -d '{"status": "in_progress", "branchUrl": "https://github.com/org/repo/tree/feat/<slug>"}'
+# Confirm: response should show "status": "IN_PROGRESS" and the branchUrl you set
+```
+4. **Implement the feature.** As you complete each subtask, mark it done:
+```bash
 curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
   -H "Content-Type: application/json" \
   -d '{"subtasks": [{"id": "<subtaskId>", "status": "done"}]}'
-
-# Move feature to in_review
+```
+5. **Before opening a PR — all tests must pass.** Run the full test suite. If any test fails, fix the bug on this branch before proceeding. Do not move to `in_review` with a failing test suite.
+6. **Open a pull request** against `main`. Record the PR URL and move to `in_review`. Verify the response:
+```bash
 curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
   -H "Content-Type: application/json" \
-  -d '{"status": "in_review"}'
+  -d '{"status": "in_review", "prUrl": "https://github.com/org/repo/pull/<number>"}'
+# Confirm: response should show "status": "IN_REVIEW" and the prUrl you set
+# For local repos not yet on GitHub, use the compare URL as a placeholder:
+# "prUrl": "https://github.com/org/repo/compare/main...feat/<slug>"
+```
+7. **Stop and wait for human review.** Do not merge. Do not start the next feature. Summarise what you implemented, what tests cover, and anything you want the reviewer to focus on.
+8. Once the human approves and merges, mark the feature done:
+```bash
+curl -X PATCH <PM_BOARD_URL>/api/agent/features/<featureId> \
+  -H "Content-Type: application/json" \
+  -d '{"status": "done"}'
+```
 
-# Create a new feature for newly discovered work
+---
+
+## Discovering new work mid-session
+
+If you identify new work that isn't tracked, create a feature for it:
+
+```bash
 curl -X POST <PM_BOARD_URL>/api/agent/features \
   -H "Content-Type: application/json" \
   -d '{"projectId": "<id>", "title": "...", "priority": "medium", "status": "backlog"}'
 ```
 
+---
+
 ## Refreshing context
 
-The context endpoint always returns live data. Re-fetch it after any update to confirm
-the change is reflected before continuing work.
+Re-fetch after any update to confirm changes before continuing work.
 
 ```bash
 # Refresh and save to file
@@ -97,11 +159,13 @@ curl -s <PM_BOARD_URL>/api/agent/projects/<projectId>/context > .pm-board-contex
 <PM_BOARD_DIR>/scripts/load-context.sh --diff
 ```
 
-**Refresh triggers — always refresh context when:**
+**Always refresh context when:**
 - You finish a subtask or feature
-- You add new features mid-session
+- You open a PR or get review feedback
 - You are resuming after a break
-- You are about to start a new major piece of work and want to confirm current state
+- You are about to start a new feature
+
+---
 
 ## PM Board location
 

@@ -51,6 +51,7 @@ export async function POST(
         status: data.status ?? "BACKLOG",
         position: (maxPosition._max.position ?? -1) + 1,
         branchUrl: data.branchUrl || null,
+        prUrl: data.prUrl || null,
         projectId,
       },
     });

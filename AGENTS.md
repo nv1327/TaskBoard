@@ -131,9 +131,44 @@ Errors return `{ ok: false, error: string }` with an appropriate HTTP status cod
 
 ---
 
-## Typical agent workflow
+## Workflow gates
 
-1. **Start of session** — fetch `?status=in_progress` to load current work as context
-2. **During work** — `PATCH` the feature spec as understanding grows
-3. **Completing tasks** — `PATCH` subtask statuses to `done` as each is finished
-4. **End of session** — move feature to `in_review` or `done`
+PM Board feature statuses act as explicit human approval checkpoints:
+
+| Status | Meaning | Gate |
+|---|---|---|
+| `backlog` | Proposed — not yet approved or specced | — |
+| `todo` | Human-approved — ready to spec and implement | ← **Gate 1: roadmap approval** |
+| `in_progress` | Agent implementing on a branch | — |
+| `in_review` | PR open, waiting for human review | ← **Gate 2: code review** |
+| `done` | Merged to main | — |
+
+## Recommended workflow by project size
+
+### Small / well-defined projects
+Skip to the coding workflow below.
+
+### Large / greenfield projects
+
+**Gate 1 — Roadmap proposal (before any spec or code):**
+1. Read the project context and mission (`contextMd`).
+2. Think through the problem space and a logical build order.
+3. Create one `backlog` feature per proposed work item — title and one-paragraph description only, no spec. Keep it scannable.
+4. Summarise the proposed roadmap to the human and wait for their approval.
+5. The human reviews in the PM Board UI: edits, reorders, deletes, promotes approved items to `todo`.
+6. **Do not write specs or code until a feature is in `todo`.**
+
+**Gate 2 — Code review (per feature, see below):**
+The human reviews each PR before merging to `main`. Required for production code.
+
+## Coding workflow (per approved `todo` feature)
+
+1. **Start of session** — fetch project context to load current work, branch/PR state, and mission.
+2. **Pick** the next `todo` feature. If it has no spec yet (approved from roadmap but not yet specced), write the full spec via `PATCH` before starting implementation.
+3. **Create a branch** `feat/<short-slug>` from `main`. Before writing any code: create `.gitignore` and set up the test environment (venv, install deps). Do this early — a broken test environment at PR time blocks the whole flow.
+4. Move feature to `in_progress` and record the branch URL via `PATCH`. Verify the response confirms the update.
+5. **Implement** the feature. Mark each subtask `done` as you go.
+6. **Run the full test suite. All tests must pass before opening a PR.** If tests catch a bug, fix it on the branch.
+7. **Open a PR** against `main`. Move feature to `in_review` and record the PR URL via `PATCH`. Verify the response. For local repos not yet on GitHub, use `<repo>/compare/main...<branch>` as the `prUrl` placeholder.
+8. **Stop and wait for human review.** Summarise what you built, what the tests cover, and what you want reviewed. Do not merge or start the next feature.
+9. After human approves and merges, move feature to `done`.

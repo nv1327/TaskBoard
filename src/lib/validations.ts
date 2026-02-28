@@ -22,6 +22,7 @@ export const createFeatureSchema = z.object({
   status: z.nativeEnum(FeatureStatus).optional(),
   position: z.number().int().optional(),
   branchUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  prUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   projectId: z.string().cuid(),
 });
 
@@ -33,6 +34,7 @@ export const updateFeatureSchema = z.object({
   status: z.nativeEnum(FeatureStatus).optional(),
   position: z.number().int().optional(),
   branchUrl: z.string().url().optional().nullable().or(z.literal("")),
+  prUrl: z.string().url().optional().nullable().or(z.literal("")),
 });
 
 // ── Subtask ───────────────────────────────────────────────────────────────────
@@ -74,6 +76,7 @@ export const agentCreateFeatureSchema = z.object({
   priority: agentPriority.optional(),
   status: agentFeatureStatus.optional(),
   branchUrl: z.string().url().optional().or(z.literal("")),
+  prUrl: z.string().url().optional().or(z.literal("")),
   subtasks: z.array(z.string().min(1)).optional(),
 });
 
@@ -84,6 +87,7 @@ export const agentUpdateFeatureSchema = z.object({
   priority: agentPriority.optional(),
   status: agentFeatureStatus.optional(),
   branchUrl: z.string().url().optional().nullable().or(z.literal("")),
+  prUrl: z.string().url().optional().nullable().or(z.literal("")),
   subtasks: z
     .array(
       z.object({

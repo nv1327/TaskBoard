@@ -80,8 +80,9 @@ export async function GET(
             : "";
 
           const branch = f.branchUrl ? `\n  Branch: ${f.branchUrl}` : "";
+          const pr = (f as typeof f & { prUrl?: string | null }).prUrl ? `\n  PR: ${(f as typeof f & { prUrl?: string | null }).prUrl}` : "";
 
-          return `#### ${f.title}\n- Priority: ${f.priority}\n- ID: \`${f.id}\`${branch}${subtaskLines}${specBlock}`;
+          return `#### ${f.title}\n- Priority: ${f.priority}\n- ID: \`${f.id}\`${branch}${pr}${subtaskLines}${specBlock}`;
         })
         .join("\n\n");
 
@@ -146,26 +147,44 @@ ${
 
 ## Agent instructions
 
-**Refresh this context** whenever any of the following happen:
-- You complete a subtask or finish a feature
-- You identify new work that should be tracked
-- You are mid-session and want to confirm current state before continuing
+### Coding workflow (follow this for every feature)
 
-**To update a feature status:**
+1. Pick the next \`todo\` or \`backlog\` feature from this document.
+2. Create a branch named after the feature: \`feat/<short-slug>\`
+3. Move the feature to \`in_progress\` and record the branch URL:
+\`\`\`bash
+curl -X PATCH ${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agent/features/<featureId> \\
+  -H "Content-Type: application/json" \\
+  -d '{"status": "in_progress", "branchUrl": "https://github.com/org/repo/tree/feat/<slug>"}'
+\`\`\`
+4. Implement the feature. Mark subtasks done as you complete them:
+\`\`\`bash
+curl -X PATCH ${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agent/features/<featureId> \\
+  -H "Content-Type: application/json" \\
+  -d '{"subtasks": [{"id": "<subtaskId>", "status": "done"}]}'
+\`\`\`
+5. Open a pull request against \`main\`. Record the PR URL and move the feature to \`in_review\`:
+\`\`\`bash
+curl -X PATCH ${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agent/features/<featureId> \\
+  -H "Content-Type: application/json" \\
+  -d '{"status": "in_review", "prUrl": "https://github.com/org/repo/pull/<number>"}'
+\`\`\`
+6. **Stop and wait for human review.** Do not merge. Do not start the next feature until the human approves or requests changes.
+7. Once merged, mark the feature done:
 \`\`\`bash
 curl -X PATCH ${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agent/features/<featureId> \\
   -H "Content-Type: application/json" \\
   -d '{"status": "done"}'
 \`\`\`
 
-**To mark a subtask complete:**
+### Other useful commands
+
+**Refresh context** (do this at session start and after any update):
 \`\`\`bash
-curl -X PATCH ${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agent/features/<featureId> \\
-  -H "Content-Type: application/json" \\
-  -d '{"subtasks": [{"id": "<subtaskId>", "status": "done"}]}'
+curl -s "${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agent/projects/${project.id}/context"
 \`\`\`
 
-**To create a new feature:**
+**Create a new feature:**
 \`\`\`bash
 curl -X POST ${process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000"}/api/agent/features \\
   -H "Content-Type: application/json" \\

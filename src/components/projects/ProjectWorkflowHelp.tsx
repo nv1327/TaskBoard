@@ -3,6 +3,39 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
+interface SnippetProps {
+  snippetKey: string;
+  code: string;
+  wrap?: boolean;
+  copied: string | null;
+  onCopy: (key: string, text: string) => void;
+}
+
+function Snippet({ snippetKey, code, wrap = false, copied, onCopy }: SnippetProps) {
+  return (
+    <div className="mt-1">
+      <div className="mb-1 flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-6 px-2 text-[10px]"
+          onClick={() => onCopy(snippetKey, code)}
+        >
+          {copied === snippetKey ? "Copied" : "Copy"}
+        </Button>
+      </div>
+      <pre
+        className={`overflow-x-auto rounded bg-zinc-900 p-2 text-[11px] text-zinc-100 ${
+          wrap ? "whitespace-pre-wrap" : ""
+        }`}
+      >
+        {code}
+      </pre>
+    </div>
+  );
+}
+
 interface ProjectWorkflowHelpProps {
   projectId?: string;
 }
@@ -34,31 +67,6 @@ export function ProjectWorkflowHelp({ projectId }: ProjectWorkflowHelpProps) {
     setTimeout(() => setCopied((curr) => (curr === key ? null : curr)), 1500);
   }
 
-  function Snippet({ snippetKey, code, wrap = false }: { snippetKey: string; code: string; wrap?: boolean }) {
-    return (
-      <div className="mt-1">
-        <div className="mb-1 flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-6 px-2 text-[10px]"
-            onClick={() => copySnippet(snippetKey, code)}
-          >
-            {copied === snippetKey ? "Copied" : "Copy"}
-          </Button>
-        </div>
-        <pre
-          className={`overflow-x-auto rounded bg-zinc-900 p-2 text-[11px] text-zinc-100 ${
-            wrap ? "whitespace-pre-wrap" : ""
-          }`}
-        >
-          {code}
-        </pre>
-      </div>
-    );
-  }
-
   return (
     <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
       <div className="flex items-center justify-between gap-3">
@@ -77,76 +85,99 @@ export function ProjectWorkflowHelp({ projectId }: ProjectWorkflowHelpProps) {
         </Button>
       </div>
 
-      {open && <div className="mt-3 space-y-3 text-xs text-zinc-700">
-        <div className="rounded border border-zinc-200 bg-white p-3">
-          <p className="font-medium text-zinc-900">Path A — You already created the project in the UI</p>
-          <ol className="mt-2 list-decimal space-y-2 pl-4">
-            <li>Open the root folder of your code project in Terminal.</li>
-            <li>
-              To create a link file so the repo on your filesystem points to this PM Board project, paste and run:
-              <Snippet snippetKey="link" code={linkSnippet} />
-            </li>
-            <li>
-              Save the latest PM Board context to a local file in that same repo:
-              <Snippet snippetKey="context" code={contextSnippet} />
-            </li>
-            <li>
-              Paste this exact instruction to your coding agent:
-              <Snippet snippetKey="agent-prompt" code={agentPromptSnippet} wrap />
-            </li>
-            <li>As work progresses, ask the agent to keep PM Board feature statuses and subtasks up to date.</li>
-          </ol>
-        </div>
+      {open && (
+        <div className="mt-3 space-y-3 text-xs text-zinc-700">
+          <div className="rounded border border-zinc-200 bg-white p-3">
+            <p className="font-medium text-zinc-900">Path A — You already created the project in the UI</p>
+            <ol className="mt-2 list-decimal space-y-2 pl-4">
+              <li>Open the root folder of your code project in Terminal.</li>
+              <li>
+                To create a link file so the repo on your filesystem points to this PM Board project, paste and run:
+                <Snippet snippetKey="link" code={linkSnippet} copied={copied} onCopy={copySnippet} />
+              </li>
+              <li>
+                Save the latest PM Board context to a local file in that same repo:
+                <Snippet snippetKey="context" code={contextSnippet} copied={copied} onCopy={copySnippet} />
+              </li>
+              <li>
+                Paste this exact instruction to your coding agent:
+                <Snippet snippetKey="agent-prompt" code={agentPromptSnippet} wrap copied={copied} onCopy={copySnippet} />
+              </li>
+              <li>
+                As work progresses, the agent should follow this loop for each feature:
+                <ul className="mt-1 list-disc space-y-1 pl-4 text-zinc-500">
+                  <li>
+                    Create a branch{" "}
+                    <code className="rounded bg-zinc-100 px-1 py-0.5">feat/&lt;slug&gt;</code>, move feature to{" "}
+                    <code className="rounded bg-zinc-100 px-1 py-0.5">in_progress</code>, record branch URL.
+                  </li>
+                  <li>Implement. Mark subtasks done as each is completed.</li>
+                  <li>
+                    Open a PR against <code className="rounded bg-zinc-100 px-1 py-0.5">main</code>, move feature to{" "}
+                    <code className="rounded bg-zinc-100 px-1 py-0.5">in_review</code>, record PR URL.
+                  </li>
+                  <li>
+                    <strong>Stop and wait for your review.</strong> Agent should not merge or continue until you approve.
+                  </li>
+                  <li>
+                    After you merge, agent marks feature{" "}
+                    <code className="rounded bg-zinc-100 px-1 py-0.5">done</code> and picks the next one.
+                  </li>
+                </ul>
+              </li>
+            </ol>
+          </div>
 
-        <div className="rounded border border-zinc-200 bg-white p-3">
-          <p className="font-medium text-zinc-900">
-            Path B — You want the agent to create a new project from a spec markdown file
+          <div className="rounded border border-zinc-200 bg-white p-3">
+            <p className="font-medium text-zinc-900">
+              Path B — You want the agent to create a new project from a spec markdown file
+            </p>
+            <ol className="mt-2 list-decimal space-y-2 pl-4">
+              <li>
+                Write your project spec as a markdown file (for example:
+                <code className="rounded bg-zinc-100 px-1 py-0.5"> spec.md </code>).
+              </li>
+              <li>
+                From the PM Board repo, run:
+                <Snippet snippetKey="init" code={initProjectSnippet} copied={copied} onCopy={copySnippet} />
+              </li>
+              <li>
+                This creates the PM Board project and writes a
+                <code className="rounded bg-zinc-100 px-1 py-0.5"> .pm-board.md </code>
+                link file in your new project folder.
+              </li>
+              <li>
+                In that new project folder, refresh context at the start of each session:
+                <Snippet snippetKey="refresh" code={refreshSnippet} copied={copied} onCopy={copySnippet} />
+              </li>
+            </ol>
+          </div>
+
+          <div className="rounded border border-zinc-200 bg-white p-3">
+            <p className="font-medium text-zinc-900">Plain-language file guide</p>
+            <ul className="mt-2 list-disc space-y-1 pl-4 text-zinc-600">
+              <li>
+                <code className="rounded bg-zinc-100 px-1 py-0.5">.pm-board.md</code> = link file (which PM Board
+                project this repo belongs to).
+              </li>
+              <li>
+                <code className="rounded bg-zinc-100 px-1 py-0.5">.pm-board-context.md</code> = latest downloaded
+                context snapshot for your agent.
+              </li>
+              <li>
+                <code className="rounded bg-zinc-100 px-1 py-0.5">contextMd</code> = the long mission/spec markdown
+                stored centrally in PM Board.
+              </li>
+            </ul>
+          </div>
+
+          <p className="text-[11px] text-zinc-500">
+            Recommended layout: keep PM Board in the same parent folder as your projects (example:
+            <code className="rounded bg-zinc-100 px-1 py-0.5"> ~/Desktop/Projects/pm-board </code>) so script paths
+            are easy.
           </p>
-          <ol className="mt-2 list-decimal space-y-2 pl-4">
-            <li>
-              Write your project spec as a markdown file (for example:
-              <code className="rounded bg-zinc-100 px-1 py-0.5"> spec.md </code>).
-            </li>
-            <li>
-              From the PM Board repo, run:
-              <Snippet snippetKey="init" code={initProjectSnippet} />
-            </li>
-            <li>
-              This creates the PM Board project and writes a
-              <code className="rounded bg-zinc-100 px-1 py-0.5"> .pm-board.md </code>
-              link file in your new project folder.
-            </li>
-            <li>
-              In that new project folder, refresh context at the start of each session:
-              <Snippet snippetKey="refresh" code={refreshSnippet} />
-            </li>
-          </ol>
         </div>
-
-        <div className="rounded border border-zinc-200 bg-white p-3">
-          <p className="font-medium text-zinc-900">Plain-language file guide</p>
-          <ul className="mt-2 list-disc space-y-1 pl-4 text-zinc-600">
-            <li>
-              <code className="rounded bg-zinc-100 px-1 py-0.5">.pm-board.md</code> = link file (which PM Board project
-              this repo belongs to).
-            </li>
-            <li>
-              <code className="rounded bg-zinc-100 px-1 py-0.5">.pm-board-context.md</code> = latest downloaded context
-              snapshot for your agent.
-            </li>
-            <li>
-              <code className="rounded bg-zinc-100 px-1 py-0.5">contextMd</code> = the long mission/spec markdown stored
-              centrally in PM Board.
-            </li>
-          </ul>
-        </div>
-
-        <p className="text-[11px] text-zinc-500">
-          Recommended layout: keep PM Board in the same parent folder as your projects (example:
-          <code className="rounded bg-zinc-100 px-1 py-0.5"> ~/Desktop/Projects/pm-board </code>) so script paths are
-          easy.
-        </p>
-      </div>}
+      )}
     </div>
   );
 }

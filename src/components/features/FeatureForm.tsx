@@ -39,6 +39,7 @@ export function FeatureForm({ projectId, feature, onSuccess }: FeatureFormProps)
     priority: feature?.priority ?? "MEDIUM" as Priority,
     status: feature?.status ?? "BACKLOG" as FeatureStatus,
     branchUrl: feature?.branchUrl ?? "",
+    prUrl: feature?.prUrl ?? "",
   });
 
   const isEdit = !!feature;
@@ -148,6 +149,17 @@ export function FeatureForm({ projectId, feature, onSuccess }: FeatureFormProps)
           value={form.branchUrl}
           onChange={(e) => setForm((f) => ({ ...f, branchUrl: e.target.value }))}
           placeholder="https://github.com/org/repo/tree/feat/my-feature"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="prUrl">Pull Request URL</Label>
+        <Input
+          id="prUrl"
+          type="url"
+          value={form.prUrl}
+          onChange={(e) => setForm((f) => ({ ...f, prUrl: e.target.value }))}
+          placeholder="https://github.com/org/repo/pull/123"
         />
       </div>
 

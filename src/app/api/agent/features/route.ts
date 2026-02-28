@@ -70,6 +70,7 @@ export async function POST(request: Request) {
         status: data.status ?? "BACKLOG",
         position: (maxPosition._max.position ?? -1) + 1,
         branchUrl: data.branchUrl || null,
+        prUrl: data.prUrl || null,
         projectId: data.projectId,
       },
     });

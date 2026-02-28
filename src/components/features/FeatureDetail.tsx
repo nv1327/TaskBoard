@@ -127,18 +127,32 @@ export function FeatureDetail({ feature: initial, projectId }: { feature: FullFe
           </span>
         </div>
 
-        {feature.branchUrl && (
-          <div className="mt-2">
-            <a
-              href={feature.branchUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex w-fit items-center gap-1 text-xs text-blue-600 hover:underline"
-            >
-              <GitBranch className="h-3 w-3" />
-              {feature.branchUrl}
-              <ExternalLink className="h-3 w-3" />
-            </a>
+        {(feature.branchUrl || feature.prUrl) && (
+          <div className="mt-2 flex flex-wrap gap-3">
+            {feature.branchUrl && (
+              <a
+                href={feature.branchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-fit items-center gap-1 text-xs text-blue-600 hover:underline"
+              >
+                <GitBranch className="h-3 w-3" />
+                Branch
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+            {feature.prUrl && (
+              <a
+                href={feature.prUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-fit items-center gap-1 text-xs text-violet-600 hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Pull Request
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
           </div>
         )}
       </div>

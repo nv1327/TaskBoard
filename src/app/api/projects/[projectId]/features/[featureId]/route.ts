@@ -68,6 +68,7 @@ export async function PATCH(
         ...(data.priority !== undefined && { priority: data.priority }),
         ...(data.status !== undefined && { status: data.status }),
         ...(data.branchUrl !== undefined && { branchUrl: data.branchUrl || null }),
+        ...(data.prUrl !== undefined && { prUrl: data.prUrl || null }),
       },
     });
 

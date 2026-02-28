@@ -51,6 +51,7 @@ model Feature {
   status      FeatureStatus @default(BACKLOG)
   position    Int           @default(0)
   branchUrl   String?
+  prUrl       String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   projectId   String
