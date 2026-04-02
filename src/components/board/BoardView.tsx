@@ -165,6 +165,7 @@ export function BoardView({ initialFeatures, projectId }: BoardViewProps) {
 
   return (
     <DndContext
+      id="board-dnd"
       sensors={sensors}
       collisionDetection={collisionDetection}
       onDragStart={handleDragStart}

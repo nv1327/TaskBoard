@@ -615,7 +615,7 @@ export function RoadmapView({
       )}
 
       {/* Sortable milestones */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext id="roadmap-dnd" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={milestones.map((m) => m.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
             {milestones.length === 0 && !showAddForm && (

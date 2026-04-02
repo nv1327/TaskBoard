@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { updateProjectSchema } from "@/lib/validations";
 
@@ -46,6 +47,7 @@ export async function DELETE(
   const { projectId } = await params;
   try {
     await prisma.project.delete({ where: { id: projectId } });
+    revalidatePath("/projects");
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Failed to delete project" }, { status: 500 });
